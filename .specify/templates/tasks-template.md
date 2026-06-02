@@ -59,12 +59,12 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 [P] Extend Zod schemas in `backend/src/api/schemas.ts` for shared payloads
+- [ ] T005 [P] Extend room/game models in `backend/src/models/` per plan
+- [ ] T006 Update in-memory room service in `backend/src/services/roomStore.ts`
+- [ ] T007 [P] Add or extend REST routes in `backend/src/api/rooms.ts`
+- [ ] T008 [P] Extend frontend API client in `frontend/src/services/api.ts`
+- [ ] T009 Configure polling interval (~2s) in relevant frontend pages/hooks
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 

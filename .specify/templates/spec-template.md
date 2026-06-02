@@ -107,4 +107,15 @@
 
 
 ## Out of Scope
-  [What this spec explicitly excludes]
+
+Per the Scribble constitution, the following are always excluded unless the constitution
+is formally amended:
+
+- WebSockets or real-time push sync (use HTTP polling only)
+- Databases or persistent storage (in-memory backend only)
+- Authentication, accounts, or sessions
+- New state-management or routing libraries beyond the starter
+- Deployment, CI, Docker, or hosting work unrelated to local validation
+- Rewriting the starter from scratch
+
+[What this spec explicitly excludes beyond the above]
