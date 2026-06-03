@@ -34,7 +34,7 @@ if ! feature_json_matches_feature_dir "$REPO_ROOT" "$FEATURE_DIR"; then
 fi
 
 if [[ ! -f "$IMPL_PLAN" ]]; then
-    echo "ERROR: plan.md not found in $FEATURE_DIR" >&2
+    echo "ERROR: plan.md not found in $PLAN_DIR" >&2
     echo "Run /speckit.plan first to create the implementation plan." >&2
     exit 1
 fi
@@ -72,9 +72,14 @@ if $JSON_MODE; then
         fi
         jq -cn \
             --arg feature_dir "$FEATURE_DIR" \
+            --arg plan_dir "$PLAN_DIR" \
+            --arg feature_spec "$FEATURE_SPEC" \
+            --arg impl_plan "$IMPL_PLAN" \
+            --arg tasks_dir "$TASKS_DIR" \
+            --arg tasks "$TASKS" \
             --argjson docs "$json_docs" \
             --arg tasks_template "${TASKS_TEMPLATE:-}" \
-            '{FEATURE_DIR:$feature_dir,AVAILABLE_DOCS:$docs,TASKS_TEMPLATE:$tasks_template}'
+            '{FEATURE_DIR:$feature_dir,PLAN_DIR:$plan_dir,FEATURE_SPEC:$feature_spec,IMPL_PLAN:$impl_plan,TASKS_DIR:$tasks_dir,TASKS:$tasks,AVAILABLE_DOCS:$docs,TASKS_TEMPLATE:$tasks_template}'
     else
         if [[ ${#docs[@]} -eq 0 ]]; then
             json_docs="[]"
@@ -82,11 +87,15 @@ if $JSON_MODE; then
             json_docs=$(for d in "${docs[@]}"; do printf '"%s",' "$(json_escape "$d")"; done)
             json_docs="[${json_docs%,}]"
         fi
-        printf '{"FEATURE_DIR":"%s","AVAILABLE_DOCS":%s,"TASKS_TEMPLATE":"%s"}\n' \
-            "$(json_escape "$FEATURE_DIR")" "$json_docs" "$(json_escape "${TASKS_TEMPLATE:-}")"
+        printf '{"FEATURE_DIR":"%s","PLAN_DIR":"%s","FEATURE_SPEC":"%s","IMPL_PLAN":"%s","TASKS_DIR":"%s","TASKS":"%s","AVAILABLE_DOCS":%s,"TASKS_TEMPLATE":"%s"}\n' \
+            "$(json_escape "$FEATURE_DIR")" "$(json_escape "$PLAN_DIR")" "$(json_escape "$FEATURE_SPEC")" "$(json_escape "$IMPL_PLAN")" "$(json_escape "$TASKS_DIR")" "$(json_escape "$TASKS")" "$json_docs" "$(json_escape "${TASKS_TEMPLATE:-}")"
     fi
 else
     echo "FEATURE_DIR: $FEATURE_DIR"
+    echo "PLAN_DIR: $PLAN_DIR"
+    echo "TASKS_DIR: $TASKS_DIR"
+    echo "TASKS: $TASKS"
+    echo "IMPL_PLAN: $IMPL_PLAN"
     echo "TASKS_TEMPLATE: ${TASKS_TEMPLATE:-not found}"
     echo "AVAILABLE_DOCS:"
     check_file "$RESEARCH" "research.md"

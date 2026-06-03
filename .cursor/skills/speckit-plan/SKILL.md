@@ -52,7 +52,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
 
-1. **Setup**: Run `.specify/scripts/bash/setup-plan.sh --json` from repo root and parse JSON for FEATURE_SPEC, IMPL_PLAN, SPECS_DIR, BRANCH. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
+1. **Setup**: Run `.specify/scripts/bash/setup-plan.sh --json` from repo root and parse JSON for FEATURE_SPEC, IMPL_PLAN, PLAN_DIR, FEATURE_NAME, SPECS_DIR, BRANCH. `PLAN_DIR` is `plans/{feature-name}/` where `feature-name` matches the spec folder basename (e.g. `specs/001-room-management` → `plans/001-room-management`). For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
 
 2. **Load context**: Read FEATURE_SPEC and `.specify/memory/constitution.md`. Load IMPL_PLAN template (already copied).
 
@@ -60,8 +60,8 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Fill Technical Context (mark unknowns as "NEEDS CLARIFICATION")
    - Fill Constitution Check section from constitution
    - Evaluate gates (ERROR if violations unjustified)
-   - Phase 0: Generate research.md (resolve all NEEDS CLARIFICATION)
-   - Phase 1: Generate data-model.md, contracts/, quickstart.md
+   - Phase 0: Generate `PLAN_DIR/research.md` (resolve all NEEDS CLARIFICATION)
+   - Phase 1: Generate `PLAN_DIR/data-model.md`, `PLAN_DIR/contracts/`, `PLAN_DIR/quickstart.md`
    - Phase 1: Update agent context by running the agent script
    - Re-evaluate Constitution Check post-design
 
@@ -120,23 +120,23 @@ Command ends after Phase 2 planning. Report branch, IMPL_PLAN path, and generate
      Task: "Find best practices for {tech} in {domain}"
    ```
 
-3. **Consolidate findings** in `research.md` using format:
+3. **Consolidate findings** in `plans/{feature-name}/research.md` using format:
    - Decision: [what was chosen]
    - Rationale: [why chosen]
    - Alternatives considered: [what else evaluated]
 
-**Output**: research.md with all NEEDS CLARIFICATION resolved
+**Output**: `plans/{feature-name}/research.md` with all NEEDS CLARIFICATION resolved
 
 ### Phase 1: Design & Contracts
 
 **Prerequisites:** `research.md` complete
 
-1. **Extract entities from feature spec** → `data-model.md`:
+1. **Extract entities from feature spec** → `plans/{feature-name}/data-model.md`:
    - Entity name, fields, relationships
    - Validation rules from requirements
    - State transitions if applicable
 
-2. **Define interface contracts** (if project has external interfaces) → `/contracts/`:
+2. **Define interface contracts** (if project has external interfaces) → `plans/{feature-name}/contracts/`:
    - Identify what interfaces the project exposes to users or other systems
    - Document the contract format appropriate for the project type
    - Examples: public APIs for libraries, command schemas for CLI tools, endpoints for web services, grammars for parsers, UI contracts for applications
@@ -145,7 +145,7 @@ Command ends after Phase 2 planning. Report branch, IMPL_PLAN path, and generate
 3. **Agent context update**:
    - Update the plan reference between the `<!-- SPECKIT START -->` and `<!-- SPECKIT END -->` markers in `.cursor/rules/specify-rules.mdc` to point to the plan file created in step 1 (the IMPL_PLAN path)
 
-**Output**: data-model.md, /contracts/*, quickstart.md, updated agent context file
+**Output**: `plans/{feature-name}/data-model.md`, `plans/{feature-name}/contracts/*`, `plans/{feature-name}/quickstart.md`, updated agent context file
 
 ## Key rules
 

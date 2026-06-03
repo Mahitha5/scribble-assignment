@@ -37,12 +37,14 @@ if ! feature_json_matches_feature_dir "$REPO_ROOT" "$FEATURE_DIR"; then
     check_feature_branch "$CURRENT_BRANCH" "$HAS_GIT" || exit 1
 fi
 
-# Ensure the feature directory exists
-mkdir -p "$FEATURE_DIR"
+# Ensure spec and plan directories exist (plan dir name matches spec feature name)
+mkdir -p "$FEATURE_DIR" "$PLAN_DIR"
 
-# Copy plan template if it exists
+# Copy plan template if it exists (do not overwrite an existing plan)
 TEMPLATE=$(resolve_template "plan-template" "$REPO_ROOT") || true
-if [[ -n "$TEMPLATE" ]] && [[ -f "$TEMPLATE" ]]; then
+if [[ -f "$IMPL_PLAN" ]]; then
+    echo "Plan already exists at $IMPL_PLAN (skipped template copy)"
+elif [[ -n "$TEMPLATE" ]] && [[ -f "$TEMPLATE" ]]; then
     cp "$TEMPLATE" "$IMPL_PLAN"
     echo "Copied plan template to $IMPL_PLAN"
 else
@@ -58,16 +60,20 @@ if $JSON_MODE; then
             --arg feature_spec "$FEATURE_SPEC" \
             --arg impl_plan "$IMPL_PLAN" \
             --arg specs_dir "$FEATURE_DIR" \
+            --arg plan_dir "$PLAN_DIR" \
+            --arg feature_name "$FEATURE_NAME" \
             --arg branch "$CURRENT_BRANCH" \
             --arg has_git "$HAS_GIT" \
-            '{FEATURE_SPEC:$feature_spec,IMPL_PLAN:$impl_plan,SPECS_DIR:$specs_dir,BRANCH:$branch,HAS_GIT:$has_git}'
+            '{FEATURE_SPEC:$feature_spec,IMPL_PLAN:$impl_plan,SPECS_DIR:$specs_dir,PLAN_DIR:$plan_dir,FEATURE_NAME:$feature_name,BRANCH:$branch,HAS_GIT:$has_git}'
     else
-        printf '{"FEATURE_SPEC":"%s","IMPL_PLAN":"%s","SPECS_DIR":"%s","BRANCH":"%s","HAS_GIT":"%s"}\n' \
-            "$(json_escape "$FEATURE_SPEC")" "$(json_escape "$IMPL_PLAN")" "$(json_escape "$FEATURE_DIR")" "$(json_escape "$CURRENT_BRANCH")" "$(json_escape "$HAS_GIT")"
+        printf '{"FEATURE_SPEC":"%s","IMPL_PLAN":"%s","SPECS_DIR":"%s","PLAN_DIR":"%s","FEATURE_NAME":"%s","BRANCH":"%s","HAS_GIT":"%s"}\n' \
+            "$(json_escape "$FEATURE_SPEC")" "$(json_escape "$IMPL_PLAN")" "$(json_escape "$FEATURE_DIR")" "$(json_escape "$PLAN_DIR")" "$(json_escape "$FEATURE_NAME")" "$(json_escape "$CURRENT_BRANCH")" "$(json_escape "$HAS_GIT")"
     fi
 else
     echo "FEATURE_SPEC: $FEATURE_SPEC"
-    echo "IMPL_PLAN: $IMPL_PLAN" 
+    echo "IMPL_PLAN: $IMPL_PLAN"
+    echo "PLAN_DIR: $PLAN_DIR"
+    echo "FEATURE_NAME: $FEATURE_NAME"
     echo "SPECS_DIR: $FEATURE_DIR"
     echo "BRANCH: $CURRENT_BRANCH"
     echo "HAS_GIT: $HAS_GIT"

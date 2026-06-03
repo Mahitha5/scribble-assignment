@@ -1,8 +1,10 @@
 # Implementation Plan: [FEATURE]
 
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Input**: Feature specification from `specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit-plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
+**Plan directory**: `plans/[###-feature-name]/` (feature name MUST match the spec folder name)
+
+**Note**: This template is filled in by the `/speckit-plan` command. Plan artifacts (`plan.md`, `research.md`, `data-model.md`, `contracts/`, `quickstart.md`) live under `plans/[###-feature-name]/`, not under `specs/`.
 
 ## Summary
 

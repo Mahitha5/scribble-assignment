@@ -173,11 +173,19 @@ function artifactInventory() {
     : [];
 
   const features = featureDirs.map((dir) => {
-    const files = ["spec.md", "plan.md", "tasks.md"].map((name) => {
-      const rel = path.join(dir, name);
+    const featureName = path.basename(dir);
+    const planDir = path.join("plans", featureName);
+    const tasksDir = path.join("tasks", featureName);
+    const fileEntries = [
+      { rel: path.join(dir, "spec.md"), name: "spec.md" },
+      { rel: path.join(planDir, "plan.md"), name: "plan.md" },
+      { rel: path.join(tasksDir, "tasks.md"), name: "tasks.md" },
+    ];
+    const files = fileEntries.map(({ rel, name }) => {
       const full = path.join(root, rel);
       return {
         path: toPosix(rel),
+        name,
         exists: existsSync(full),
         characters: existsSync(full) ? charCount(full) : 0,
       };
@@ -185,6 +193,8 @@ function artifactInventory() {
 
     return {
       directory: toPosix(dir),
+      planDirectory: toPosix(planDir),
+      tasksDirectory: toPosix(tasksDir),
       complete: files.every((file) => file.exists),
       files,
     };
@@ -227,7 +237,11 @@ function artifactInventory() {
   if (!constitution.exists) failures.push("Missing .specify/memory/constitution.md.");
   if (features.length < 4) failures.push(`Expected at least 4 specs/NNN-* feature folders; found ${features.length}.`);
   for (const feature of features) {
-    if (!feature.complete) failures.push(`${feature.directory} is missing spec.md, plan.md, or tasks.md.`);
+    if (!feature.complete) {
+      failures.push(
+        `${feature.directory} is missing spec.md, ${feature.tasksDirectory} is missing tasks.md, or ${feature.planDirectory} is missing plan.md.`,
+      );
+    }
   }
   if (!reflection.exists) failures.push("Missing root reflection.md or REFLECTION.md.");
 

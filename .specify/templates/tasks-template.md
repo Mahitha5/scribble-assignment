@@ -5,9 +5,9 @@ description: "Task list template for feature implementation"
 
 # Tasks: [FEATURE NAME]
 
-**Input**: Design documents from `/specs/[###-feature-name]/`
+**Input**: `specs/[###-feature-name]/spec.md`, `plans/[###-feature-name]/`, and output to `tasks/[###-feature-name]/tasks.md` (feature name MUST match spec and plan folders)
 
-**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
+**Prerequisites**: `plans/[###-feature-name]/plan.md` (required), `specs/[###-feature-name]/spec.md` (required for user stories), `plans/[###-feature-name]/research.md`, `data-model.md`, `contracts/`
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 

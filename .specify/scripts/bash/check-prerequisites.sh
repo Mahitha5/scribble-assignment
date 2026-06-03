@@ -95,11 +95,13 @@ if $PATHS_ONLY; then
                 --arg feature_dir "$FEATURE_DIR" \
                 --arg feature_spec "$FEATURE_SPEC" \
                 --arg impl_plan "$IMPL_PLAN" \
+                --arg plan_dir "$PLAN_DIR" \
                 --arg tasks "$TASKS" \
-                '{REPO_ROOT:$repo_root,BRANCH:$branch,FEATURE_DIR:$feature_dir,FEATURE_SPEC:$feature_spec,IMPL_PLAN:$impl_plan,TASKS:$tasks}'
+                --arg tasks_dir "$TASKS_DIR" \
+                '{REPO_ROOT:$repo_root,BRANCH:$branch,FEATURE_DIR:$feature_dir,FEATURE_SPEC:$feature_spec,IMPL_PLAN:$impl_plan,PLAN_DIR:$plan_dir,TASKS_DIR:$tasks_dir,TASKS:$tasks}'
         else
-            printf '{"REPO_ROOT":"%s","BRANCH":"%s","FEATURE_DIR":"%s","FEATURE_SPEC":"%s","IMPL_PLAN":"%s","TASKS":"%s"}\n' \
-                "$(json_escape "$REPO_ROOT")" "$(json_escape "$CURRENT_BRANCH")" "$(json_escape "$FEATURE_DIR")" "$(json_escape "$FEATURE_SPEC")" "$(json_escape "$IMPL_PLAN")" "$(json_escape "$TASKS")"
+            printf '{"REPO_ROOT":"%s","BRANCH":"%s","FEATURE_DIR":"%s","FEATURE_SPEC":"%s","IMPL_PLAN":"%s","PLAN_DIR":"%s","TASKS_DIR":"%s","TASKS":"%s"}\n' \
+                "$(json_escape "$REPO_ROOT")" "$(json_escape "$CURRENT_BRANCH")" "$(json_escape "$FEATURE_DIR")" "$(json_escape "$FEATURE_SPEC")" "$(json_escape "$IMPL_PLAN")" "$(json_escape "$PLAN_DIR")" "$(json_escape "$TASKS_DIR")" "$(json_escape "$TASKS")"
         fi
     else
         echo "REPO_ROOT: $REPO_ROOT"
@@ -107,6 +109,8 @@ if $PATHS_ONLY; then
         echo "FEATURE_DIR: $FEATURE_DIR"
         echo "FEATURE_SPEC: $FEATURE_SPEC"
         echo "IMPL_PLAN: $IMPL_PLAN"
+        echo "PLAN_DIR: $PLAN_DIR"
+        echo "TASKS_DIR: $TASKS_DIR"
         echo "TASKS: $TASKS"
     fi
     exit 0
@@ -120,14 +124,14 @@ if [[ ! -d "$FEATURE_DIR" ]]; then
 fi
 
 if [[ ! -f "$IMPL_PLAN" ]]; then
-    echo "ERROR: plan.md not found in $FEATURE_DIR" >&2
+    echo "ERROR: plan.md not found in $PLAN_DIR" >&2
     echo "Run /speckit.plan first to create the implementation plan." >&2
     exit 1
 fi
 
 # Check for tasks.md if required
 if $REQUIRE_TASKS && [[ ! -f "$TASKS" ]]; then
-    echo "ERROR: tasks.md not found in $FEATURE_DIR" >&2
+    echo "ERROR: tasks.md not found in $TASKS_DIR" >&2
     echo "Run /speckit.tasks first to create the task list." >&2
     exit 1
 fi
