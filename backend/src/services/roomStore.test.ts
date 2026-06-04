@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { STARTER_WORDS } from "../seed/starterData.js";
 import {
   STALE_PARTICIPANT_MS,
   createRoom,
   getRoom,
   joinRoom,
   leaveRoom,
+  pickSecretWordForRoomCode,
   startGame,
   toRoomSnapshot
 } from "./roomStore.js";
@@ -154,5 +156,128 @@ describe("roomStore", () => {
     if (started.ok) {
       expect(started.room.status).toBe("active");
     }
+  });
+
+  it("pickSecretWordForRoomCode is deterministic and uses starter vocabulary", () => {
+    const wordA = pickSecretWordForRoomCode("ABCD");
+    const wordB = pickSecretWordForRoomCode("ABCD");
+    expect(wordA).toBe(wordB);
+    expect(STARTER_WORDS).toContain(wordA);
+  });
+
+  it("startGame assigns drawer to host, secret word, and preserves names", () => {
+    const host = createRoom("");
+    const guest = joinRoom(host.room.code, "  Ali  ");
+    expect(guest.ok).toBe(true);
+    if (!guest.ok) {
+      return;
+    }
+
+    const started = startGame(host.room.code, host.participantId);
+    expect(started.ok).toBe(true);
+    if (!started.ok) {
+      return;
+    }
+
+    expect(started.room.drawerId).toBe(host.participantId);
+    expect(started.room.secretWord).toBe(pickSecretWordForRoomCode(host.room.code));
+    expect(started.room.participants.map((p) => p.name)).toEqual(["", "  Ali  "]);
+  });
+
+  it("toRoomSnapshot exposes roles and omits secretWord for guesser", () => {
+    const host = createRoom("Host");
+    const guest = joinRoom(host.room.code, "Guest");
+    expect(guest.ok).toBe(true);
+    if (!guest.ok) {
+      return;
+    }
+
+    const started = startGame(host.room.code, host.participantId);
+    expect(started.ok).toBe(true);
+    if (!started.ok) {
+      return;
+    }
+
+    const drawerView = toRoomSnapshot(started.room, host.participantId);
+    expect(drawerView.secretWord).toBe(started.room.secretWord);
+    expect(drawerView.drawerId).toBe(host.participantId);
+    expect(drawerView.availableWords).toBeUndefined();
+
+    const guesserView = toRoomSnapshot(started.room, guest.participantId);
+    expect("secretWord" in guesserView).toBe(false);
+    expect(JSON.stringify(guesserView)).not.toMatch(/"secretWord"\s*:/);
+    expect(guesserView.participants.find((p) => p.id === guest.participantId)?.role).toBe("guesser");
+    expect(guesserView.participants.find((p) => p.id === host.participantId)?.role).toBe("drawer");
+  });
+
+  it("guesser snapshot omits secretWord across 10 iterations", () => {
+    const host = createRoom("Host");
+    const guest = joinRoom(host.room.code, "Guest");
+    expect(guest.ok).toBe(true);
+    if (!guest.ok) {
+      return;
+    }
+
+    const started = startGame(host.room.code, host.participantId);
+    expect(started.ok).toBe(true);
+    if (!started.ok) {
+      return;
+    }
+
+    for (let index = 0; index < 10; index += 1) {
+      const snapshot = toRoomSnapshot(started.room, guest.participantId);
+      expect("secretWord" in snapshot).toBe(false);
+    }
+  });
+
+  it("second startGame while active returns already_started without mutating round", () => {
+    const host = createRoom("Host");
+    const guest = joinRoom(host.room.code, "Guest");
+    expect(guest.ok).toBe(true);
+    if (!guest.ok) {
+      return;
+    }
+
+    const started = startGame(host.room.code, host.participantId);
+    expect(started.ok).toBe(true);
+    if (!started.ok) {
+      return;
+    }
+
+    const second = startGame(host.room.code, host.participantId);
+    expect(second.ok).toBe(false);
+    if (!second.ok) {
+      expect(second.reason).toBe("already_started");
+    }
+
+    const room = getRoom(host.room.code, host.participantId);
+    expect(room?.drawerId).toBe(started.room.drawerId);
+    expect(room?.secretWord).toBe(started.room.secretWord);
+    expect(room?.participants.map((p) => p.name)).toEqual(["Host", "Guest"]);
+  });
+
+  it("transferred host becomes drawer on start", () => {
+    const host = createRoom("Host");
+    const guest1 = joinRoom(host.room.code, "Guest1");
+    const guest2 = joinRoom(host.room.code, "Guest2");
+    expect(guest1.ok).toBe(true);
+    expect(guest2.ok).toBe(true);
+    if (!guest1.ok || !guest2.ok) {
+      return;
+    }
+
+    leaveRoom(host.room.code, host.participantId);
+    const room = getRoom(host.room.code, guest1.participantId);
+    expect(room?.hostId).toBe(guest1.participantId);
+
+    const started = startGame(host.room.code, guest1.participantId);
+    expect(started.ok).toBe(true);
+    if (!started.ok) {
+      return;
+    }
+
+    expect(started.room.drawerId).toBe(guest1.participantId);
+    const snapshot = toRoomSnapshot(started.room, guest1.participantId);
+    expect(snapshot.participants.find((p) => p.id === guest1.participantId)?.role).toBe("drawer");
   });
 });

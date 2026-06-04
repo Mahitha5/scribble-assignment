@@ -13,6 +13,7 @@ export interface ParticipantSnapshot {
   name: string;
   joinedAt: string;
   isHost: boolean;
+  role?: ParticipantRole;
 }
 
 export interface Room {
@@ -22,6 +23,8 @@ export interface Room {
   participants: Participant[];
   createdAt: string;
   updatedAt: string;
+  drawerId?: string;
+  secretWord?: string;
 }
 
 export interface RoomSnapshot {
@@ -30,8 +33,10 @@ export interface RoomSnapshot {
   status: RoomStatus;
   canStart: boolean;
   participants: ParticipantSnapshot[];
-  availableWords: string[];
   roles: ParticipantRole[];
+  drawerId?: string;
+  secretWord?: string;
+  availableWords?: string[];
 }
 
 export interface RoomSessionResponse {

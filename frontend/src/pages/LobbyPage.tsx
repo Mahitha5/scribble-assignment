@@ -90,6 +90,13 @@ export function LobbyPage() {
     }
   }, [navigate, room]);
 
+  useEffect(() => {
+    if (room?.status === "active") {
+      skipLeaveOnUnmountRef.current = true;
+      navigate("/game", { replace: true });
+    }
+  }, [navigate, room?.status]);
+
   async function handleStartGame() {
     if (!isHost || !room?.canStart) {
       return;

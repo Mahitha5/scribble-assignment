@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { ActiveGameRedirect } from "../components/ActiveGameRedirect";
 import { AppShell } from "../components/AppShell";
 import { CreateRoomPage } from "../pages/CreateRoomPage";
 import { GamePage } from "../pages/GamePage";
@@ -10,6 +11,7 @@ export function AppRoutes() {
   return (
     <BrowserRouter>
       <AppShell>
+        <ActiveGameRedirect />
         <Routes>
           <Route path="/" element={<StartPage />} />
           <Route path="/create-room" element={<CreateRoomPage />} />

@@ -192,3 +192,16 @@ export function useIsHost() {
   const { room, participantId } = useRoomState();
   return Boolean(room && participantId && room.hostId === participantId);
 }
+
+export function useViewerRole(): "drawer" | "guesser" | null {
+  const { room, participantId } = useRoomState();
+  if (!room || room.status !== "active" || !participantId) {
+    return null;
+  }
+  const viewer = room.participants.find((participant) => participant.id === participantId);
+  return viewer?.role ?? null;
+}
+
+export function useIsDrawer() {
+  return useViewerRole() === "drawer";
+}

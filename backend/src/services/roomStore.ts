@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Participant, Room, RoomSnapshot } from "../models/game.js";
+import type { Participant, ParticipantRole, Room, RoomSnapshot } from "../models/game.js";
 import { STARTER_ROLES, STARTER_WORDS } from "../seed/starterData.js";
 
 const rooms = new Map<string, Room>();
@@ -107,6 +107,16 @@ export function listWords() {
   return [...STARTER_WORDS];
 }
 
+/** Deterministic first-round word from room code only (sum of char codes mod vocabulary size). */
+export function pickSecretWordForRoomCode(code: string): string {
+  let sum = 0;
+  for (const char of code) {
+    sum += char.charCodeAt(0);
+  }
+  const index = sum % STARTER_WORDS.length;
+  return STARTER_WORDS[index]!;
+}
+
 export function createRoom(playerName?: string) {
   const participant = createParticipant(playerName);
   const room: Room = {
@@ -202,9 +212,18 @@ export function startGame(code: string, participantId: string): StartGameResult 
     return { ok: false, reason: "not_enough_players" };
   }
 
+  const namesBefore = room.participants.map((participant) => participant.name);
+
   room.status = "active";
+  room.drawerId = room.hostId;
+  room.secretWord = pickSecretWordForRoomCode(room.code);
   room.updatedAt = now();
   rooms.set(room.code, room);
+
+  const namesAfter = room.participants.map((participant) => participant.name);
+  if (namesBefore.join("\u0000") !== namesAfter.join("\u0000")) {
+    throw new Error("startGame must not modify participant names");
+  }
 
   return { ok: true, room: cloneRoom(room) };
 }
@@ -229,8 +248,20 @@ export function saveRoom(room: Room) {
   return getRoom(room.code);
 }
 
+function participantRole(room: Room, participantId: string): ParticipantRole | undefined {
+  if (room.status !== "active" || !room.drawerId) {
+    return undefined;
+  }
+  return participantId === room.drawerId ? "drawer" : "guesser";
+}
+
 export function toRoomSnapshot(room: Room, viewerParticipantId?: string): RoomSnapshot {
-  return {
+  const isDrawerViewer =
+    room.status === "active" &&
+    Boolean(room.drawerId) &&
+    viewerParticipantId === room.drawerId;
+
+  const snapshot: RoomSnapshot = {
     code: room.code,
     hostId: room.hostId,
     status: room.status,
@@ -239,9 +270,19 @@ export function toRoomSnapshot(room: Room, viewerParticipantId?: string): RoomSn
       id: participant.id,
       name: participant.name,
       joinedAt: participant.joinedAt,
-      isHost: participant.id === room.hostId
+      isHost: participant.id === room.hostId,
+      ...(room.status === "active" && room.drawerId
+        ? { role: participantRole(room, participant.id)! }
+        : {})
     })),
-    availableWords: listWords(),
-    roles: [...STARTER_ROLES]
+    roles: [...STARTER_ROLES],
+    ...(room.status === "active" && room.drawerId ? { drawerId: room.drawerId } : {}),
+    ...(room.status === "lobby" ? { availableWords: listWords() } : {})
   };
+
+  if (isDrawerViewer && room.secretWord) {
+    snapshot.secretWord = room.secretWord;
+  }
+
+  return snapshot;
 }

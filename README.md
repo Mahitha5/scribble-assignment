@@ -173,7 +173,7 @@ Maintain these artifacts throughout the lab:
 
 ### Scenario 2 — Game Start & Drawer Flow
 
-**Given** a game is starting and player names are stored as entered (no trim; no backend defaults; duplicate names allowed), **When** the first round begins, **Then** the host (or first player) becomes the clearly-identified drawer, and the secret word (deterministically selected from the starter list) is visible only to the drawer.
+**Given** a game is starting and player names are stored as entered (no trim; no backend defaults; duplicate names allowed), **When** the host starts with at least two players, **Then** the current host becomes the drawer, the secret word is chosen deterministically from the room code (`rocket`, `pizza`, `castle`, `guitar`, `sunflower`), only the drawer’s poll responses include `secretWord`, and all clients auto-navigate to `/game` when the room phase is active.
 
 ### Scenario 3 — Gameplay Interaction
 
