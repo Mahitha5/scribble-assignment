@@ -17,6 +17,8 @@ A player wants to start a new drawing game session by creating a room that other
 1. **Given** a player is on the main game interface, **When** they choose to create a room, **Then** a unique room code is generated and displayed
 2. **Given** a room is created, **When** the creator views the lobby, **Then** they are designated as the host
 3. **Given** a room is created, **When** the host views the room status, **Then** they can see they are the only participant and the game cannot start yet
+4. **Given** a player creates a room with no display name, **When** the room is created, **Then** they join as host with an empty display name (not rejected, no server-assigned default)
+5. **Given** a player enters a display name with leading or trailing spaces, **When** the room is created, **Then** the lobby shows the name exactly as entered including those spaces
 
 ---
 
@@ -28,7 +30,7 @@ A player wants to join an existing game room using a room code shared by the hos
 
 **Acceptance Scenarios**:
 
-1. **Given** a valid room code exists, **When** a player enters the code and attempts to join (with or without a display name), **Then** they are added to the room lobby with their chosen name or an auto-assigned default (`player1`, `player2`, …)
+1. **Given** a valid room code exists, **When** a player enters the code and attempts to join (with any display name text or with no name), **Then** they are added to the room lobby with their input stored exactly as provided (including empty string or whitespace-only text) — never rejected for name content and never given a server default
 2. **Given** a player joins a room, **When** they view the lobby, **Then** they can see all current participants and identify who the host is
 3. **Given** multiple players are in a room, **When** they view the lobby, **Then** all players see the same participant list and host designation
 
@@ -86,7 +88,9 @@ The host can start the game only when there are at least 2 players in the room, 
 - What happens in React Strict Mode (dev double-mount)? → Lobby must **not** call `leave` in `useEffect` cleanup; only explicit Leave, `pagehide`, or stale server eviction end membership
 - What occurs if two players try to create rooms simultaneously?
 - How are duplicate room codes prevented?
-- What happens if a player tries to join the same room multiple times?
+- What happens when a player submits only whitespace in the display name field? → Stored exactly as entered (e.g. `"   "`), not normalized (FR-016)
+- What happens if a player tries to join the same room while already present? → Rejected as duplicate join; client must not reuse the same active `participantId` in that room
+- What happens when two players use the same display name? → Allowed; duplicate names do not block join or start (FR-017)
 - How does the system handle rooms that become empty?
 - What happens if the same room code is generated twice simultaneously?
 
@@ -109,31 +113,45 @@ The host can start the game only when there are at least 2 players in the room, 
 - **FR-013**: System MUST transfer host privileges to the next player who joined when the current host leaves a room with other players present
 - **FR-014**: System MUST immediately clean up and remove empty rooms from memory when the last player leaves
 - **FR-015**: System MUST implement retry logic with exponential backoff when lobby polling fails or times out
-- **FR-016**: System MUST treat `playerName` as optional on create and join; when missing, empty, or whitespace-only, assign `player1` for the first participant in a new room and the lowest unused `playerN` (`player2`, `player3`, …) when joining an existing room
+- **FR-016**: System MUST treat `playerName` as optional on create and join; MUST NOT reject requests based on name content (including empty or whitespace-only); MUST store the provided string exactly as received with no trimming or other normalization; MUST NOT assign server default names such as `player1` or `player2`; when `playerName` is omitted, store empty string; name length MUST be at most 50 characters as provided or rejected with a clear validation error
+- **FR-017**: System MUST allow duplicate display names within the same room; uniqueness is not required for participant names
 
 ### Data Requirements
 
 The feature requires the following data to be maintained in memory:
 
 - Room state information (code, participants, host designation, creation time)
-- Player information within rooms (display name, join time, host status)
+- Player information within rooms (display name stored as-is, join time, host status)
 - Room code registry to prevent duplicates and enable lookup
 - Lobby state for each room (participant list, game status)
 
 ### Key Entities
 
 - **Room**: Represents a game session with a unique code, designated host, participant list, and current state (lobby/active)
-- **Player**: Represents a participant in a room with display name and role (host/participant)
+- **Player**: Represents a participant in a room with display name (as entered) and role (host/participant)
 - **Room Code**: Unique identifier allowing players to discover and join specific rooms
 
+## Assumptions
+
+- Display names are opaque labels; leading/trailing spaces are meaningful and preserved
+- Missing `playerName` in a request is equivalent to an empty string, not a default name
+- Room codes continue to be normalized to uppercase for validation (separate from display names)
+
 ## Clarifications
+
+### Session 2026-06-04 (update)
+
+- Q: Should player names be trimmed? → A: No — store exactly as provided; strict as-is, no trim (FR-016).
+- Q: Should empty or whitespace-only player names be rejected? → A: No — accept and store as-is (empty or whitespace characters preserved); no server defaults (FR-016).
+- Q: Are duplicate display names allowed in one room? → A: Yes — duplicates are accepted (FR-017).
+- Q: Does the backend assign `player1` / `player2` defaults? → A: No (FR-016).
 
 ### Session 2026-06-03
 
 - Q: What should the room code format be? → A: Alphanumeric codes (4-6 chars, uppercase)
 - Q: What should happen when the host leaves a room with other players? → A: Transfer host to next player who joined
-- Q: How do players get their display names in rooms? → A: Optional field on Create/Join pages; if omitted, backend assigns `player1` on create and the next unused `playerN` on join (incrementing by 1)
-- Q: Is `playerName` required on create/join? → A: No — optional in request body; empty/whitespace/missing triggers server default naming
+- Q: How do players get their display names in rooms? → A: Optional field on Create/Join pages; stored as-is (may be empty)
+- Q: Is `playerName` required on create/join? → A: No — optional; omitted means empty string
 - Q: When should empty rooms be cleaned up from memory? → A: Immediately after last player leaves
 - Q: How should the system handle polling failures or timeouts? → A: Retry with exponential backoff
 - Q: How should disconnections be handled without WebSockets? → A: `lastSeenAt` heartbeat on each poll (`GET` with `participantId`); evict participants stale for ~15s; best-effort `leave` on `pagehide` (tab close) or explicit Leave — **not** on React `useEffect` cleanup (avoids Strict Mode and `/game` navigation bugs)
@@ -149,7 +167,8 @@ The feature requires the following data to be maintained in memory:
 - **Host Control**: Only hosts can access game start functionality, and it's unavailable with fewer than 2 players
 - **Code Uniqueness**: Room code collisions occur less than 0.01% of the time
 - **Polling Reliability**: Lobby polling maintains 95% uptime with graceful degradation during network issues
-
+- **As-is names**: 100% of create/join attempts store the submitted `playerName` string without trimming; a name entered as `"  Ali  "` appears in the lobby as `"  Ali  "`
+- **Duplicate names accepted**: Two participants may share the same display name without join or lobby errors
 
 ## Out of Scope
 
@@ -172,3 +191,4 @@ This specification explicitly excludes:
 - Player communication features (chat, voice, etc.)
 - Room analytics or usage tracking
 - Advanced lobby features (spectator mode, player roles beyond host)
+- Trimming or sanitizing display names (including collapsing whitespace)

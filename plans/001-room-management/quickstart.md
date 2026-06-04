@@ -2,10 +2,11 @@
 
 ## Overview
 
-This guide provides the implementation steps for adding room management features to the existing Scribble multiplayer drawing game. The implementation extends the current room system with host management, HTTP polling, validation, and participant lifecycle.
+Reference guide for room management in the Scribble lab. **Feature 001 is implemented**; use this for verification, onboarding, and two-tab regression.
 
-**Estimated Implementation Time**: 4-6 hours  
-**Prerequisites**: Existing codebase with basic room create/join functionality
+**Key behaviors (2026-06-04):** HTTP polling lobby; host transfer; optional names stored **as-is** (no trim; empty or whitespace OK; no `player1` defaults); duplicate display names allowed; host-only start with ≥2 players.
+
+**Prerequisites**: Backend on `:3001`, frontend on `:5173`, `npm install` in both apps.
 
 ---
 
@@ -191,10 +192,11 @@ npm run dev                 # Start development server
 
 # Manual testing
 # 1. Open http://localhost:5173 in two browser tabs
-# 2. Create room in tab 1
-# 3. Join room in tab 2 using displayed code
-# 4. Verify both tabs show participant updates
-# 5. Test host transfer by closing tab 1
+# 2. Create room in tab 1 with name "  Ali  " — lobby must show spaces
+# 3. Join room in tab 2 (blank or duplicate name OK)
+# 4. Verify both tabs show participant updates within ~3s
+# 5. Host start with 2+ players; no leave on navigate to /game
+# 6. Test host transfer by explicit leave or tab close (pagehide)
 ```
 
 ---

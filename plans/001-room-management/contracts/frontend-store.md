@@ -190,10 +190,9 @@ const isValidRoomCode = (code: string): boolean => {
   return /^[A-Z0-9]{4,6}$/.test(code.toUpperCase());
 };
 
-// Player name validation (optional; server assigns playerN when blank)
+// Player name optional; server stores as-is (no trim); max 50 chars as entered
 const isValidPlayerName = (name: string): boolean => {
-  const trimmed = name.trim();
-  return trimmed.length === 0 || trimmed.length <= 50;
+  return name.length <= 50;
 };
 ```
 
@@ -221,8 +220,8 @@ class RoomStore {
   setRoomSnapshot(room: RoomSnapshot): void
   
   // New methods for room management
-  createRoom(playerName: string): Promise<void>
-  joinRoom(code: string, playerName: string): Promise<void>  
+  createRoom(playerName?: string): Promise<void>
+  joinRoom(code: string, playerName?: string): Promise<void>  
   leaveRoom(): Promise<void>
   fetchRoom(): Promise<void>
 }

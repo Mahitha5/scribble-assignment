@@ -2,33 +2,28 @@
 
 **Input**: Feature specification from `specs/001-room-management/spec.md`
 
-**Plan directory**: `plans/001-room-management/` (matches spec folder `specs/001-room-management/`)
+**Plan directory**: `plans/001-room-management/` (matches `specs/001-room-management/`)
 
-**Note**: This template is filled in by the `/speckit-plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
+**Status**: Implemented and aligned with spec (2026-06-04, as-is names). Use for regression, review, and traceability to `tasks/001-room-management/tasks.md`.
+
+**Spec traceability**: FR-001–FR-015 room/poll/host lifecycle; FR-016 as-is `playerName` (no trim, no defaults); FR-017 duplicate names allowed.
 
 ## Summary
 
-A multiplayer drawing game room system that enables players to create and join game rooms using unique 4-6 character alphanumeric codes. The system implements host-based room management with automatic host transfer, HTTP polling for lobby updates, and complete room isolation. Core functionality includes room creation, player joining with display names, lobby state synchronization, and game start controls restricted to hosts with minimum 2 players.
+Multiplayer room lifecycle: create/join by 4–6 character codes, optional display names (stored **as-is**, no trim; empty allowed; **no** `playerN` server defaults; **duplicate names allowed**), host designation with transfer on leave, ~2s lobby polling with exponential backoff, stale-participant eviction (~15s), host-only game start when ≥2 players, and in-memory room isolation. Gameplay after start (drawer, word, canvas) is covered by `specs/002-game-start-drawer`.
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**Initial Check (✅ PASSED):**
-- [x] **TypeScript-First**: Room management code will be implemented in TypeScript using ES modules in both backend/src and frontend/src
-- [x] **REST + Zod**: New room endpoints (`POST /rooms`, `GET /rooms/:code`, `POST /rooms/:code/join`) will use Express routes with Zod validation for payloads
-- [x] **React + Vite patterns**: Frontend will extend existing roomStore.ts pattern for room state management, no new libraries needed
-- [x] **HTTP polling only**: Lobby updates will use 2-second HTTP polling via GET requests, no WebSockets or SSE
-- [x] **In-memory only**: Room data stored in backend memory using Map structures, no database or persistent storage
-- [x] **Brownfield scope**: Extends existing starter structure in backend/src/services and frontend/src/state, no full rewrite
+**Initial & post-design (PASSED):**
 
-**Post-Design Re-evaluation (✅ CONFIRMED):**
-- [x] **TypeScript-First**: All new interfaces, types, and logic defined in TypeScript with proper typing
-- [x] **REST + Zod**: New `POST /rooms/:code/leave` endpoint follows established Express + Zod pattern
-- [x] **React + Vite patterns**: Polling implemented with useEffect hooks, store pattern maintained
-- [x] **HTTP polling only**: No real-time push mechanisms introduced, exponential backoff uses standard HTTP
-- [x] **In-memory only**: RoomStore class continues using Map<string, Room> with no external persistence
-- [x] **Brownfield scope**: All changes extend existing files, no new frameworks or architectural patterns
+- [x] **TypeScript-First**: `backend/src`, `frontend/src` — typed ESM
+- [x] **REST + Zod**: `backend/src/api/rooms.ts`, `schemas.ts`
+- [x] **React + Vite patterns**: `roomStore.ts`, functional pages, no new state libraries
+- [x] **HTTP polling only**: `LobbyPage` poll loop; no WebSockets
+- [x] **In-memory only**: `roomStore.ts` `Map<string, Room>`
+- [x] **Brownfield scope**: Extends starter; no rewrite
 
 ## Tech Stack
 
@@ -36,66 +31,114 @@ A multiplayer drawing game room system that enables players to create and join g
 |-------|-------|
 | Backend | Node.js, Express, TypeScript, Zod, tsx, Vitest |
 | Frontend | React 18, React Router 6, Vite, TypeScript, Vitest |
-| Sync | HTTP polling via REST (`GET /rooms/:code`, etc.) |
-| Storage | In-memory services in `backend/src/services/` |
+| Sync | HTTP polling `GET /rooms/:code?participantId=` (~2s, backoff on failure) |
+| Storage | In-memory `backend/src/services/roomStore.ts` |
 
 ## Architecture
 
 ### Data Flow
 
 ```
-Frontend (LobbyPage) → HTTP Polling (every 2s) → Backend GET /rooms/:code
-                    ↓
-      Room State Updates → roomStore → React Context → UI Updates
-
-Room Creation: CreateRoomPage → POST /rooms → Backend generates code + hostId
-Room Joining: JoinRoomPage → POST /rooms/:code/join → Backend adds participant
-Host Transfer: Backend detects host leave → Auto-promote next participant
-Room Cleanup: Last player leaves → Backend deletes room from memory Map
-Disconnect: Poll heartbeat (`lastSeenAt` on GET with `participantId`) → evict stale ~15s; client leave on `pagehide` or explicit Leave (not React unmount / not navigate to `/game`)
+CreateRoomPage → POST /rooms { playerName? } → createRoom() → lobby
+JoinRoomPage   → POST /rooms/:code/join → joinRoom() → lobby
+LobbyPage      → poll GET /rooms/:code?participantId= (2s, backoff) → roomStore → UI
+Leave          → POST /rooms/:code/leave OR stale eviction OR pagehide leave
+Host start     → POST /rooms/:code/start (host, ≥2 players) → status active → navigate /game (no leave on route change)
 ```
+
+### Player naming (FR-016 / FR-017)
+
+| Input | Stored `Participant.name` |
+|-------|---------------------------|
+| Omitted | `""` |
+| `""` | `""` |
+| `"   "` | `"   "` (whitespace preserved) |
+| `"  Ali  "` | `"  Ali  "` |
+| Two players `"Bob"` | Both `"Bob"` (allowed) |
+
+Implementation: `storePlayerNameAsIs()` in `roomStore.ts`; Zod preserves string as received; frontend sends `playerName` without trimming.
 
 ### API Contracts
 
-**Extended endpoints (building on existing):**
+| Method | Endpoint | Request | Response | Notes |
+|--------|----------|---------|----------|-------|
+| `POST` | `/rooms` | `{ playerName? }` | `{ participantId, room }` | Creator = host |
+| `POST` | `/rooms/:code/join` | `{ playerName?, participantId? }` | `{ participantId, room }` | `400` if already in room |
+| `GET` | `/rooms/:code` | `?participantId` | `{ room }` | Heartbeat updates `lastSeenAt` |
+| `POST` | `/rooms/:code/leave` | `{ participantId }` | `{ success }` | Host transfer; delete if empty |
+| `POST` | `/rooms/:code/start` | `{ participantId }` | `{ room }` | Host-only; `status: active` |
 
-| Method | Endpoint | Request | Response | Changes |
-|--------|----------|---------|----------|---------|
-| `POST` | `/rooms` | `{ playerName? }` | `{ participantId, room }` | Add `hostId`; default name `player1` if omitted |
-| `POST` | `/rooms/:code/join` | `{ playerName? }` | `{ participantId, room }` | Default name `playerN` if omitted |
-| `GET` | `/rooms/:code` | `?participantId=id` | `{ room }` | Include host info in snapshot |
-| `POST` | `/rooms/:code/leave` | `{ participantId }` | `{ success }` | **New:** Handle host transfer |
-| `POST` | `/rooms/:code/start` | `{ participantId }` | `{ room }` | **New:** Host-only; sets `status` to `active` |
+**RoomSnapshot (derived):** `hostId`, `canStart` (lobby + count ≥ 2), per-participant `isHost`.
 
-**Enhanced RoomSnapshot:**
-- Add `hostId: string` field
-- Add `canStart: boolean` (derived from participant count >= 2)
-- Add `isHost: boolean` (derived from participantId match)
+Detail: `plans/001-room-management/contracts/api-endpoints.md`, `contracts/frontend-store.md`.
 
-### File Structure
+### File Structure (implemented)
 
-**Backend extensions:**
-```
-backend/src/
-├── models/game.ts           # Add hostId to Room; isHost on ParticipantSnapshot (derived in toRoomSnapshot)
-├── services/roomStore.ts    # Add leaveRoom, host transfer logic  
-├── api/rooms.ts            # Add leave endpoint, enhanced validation
-├── api/schemas.ts          # Add room code format validation, leave schema
-```
+**Backend**
 
-**Frontend extensions:**
-```
-frontend/src/
-├── state/roomStore.ts      # Add polling logic, leave method
-├── services/api.ts         # Add leaveRoom, enhanced types
-├── pages/LobbyPage.tsx     # Add polling, host controls, improved UI
-├── pages/JoinRoomPage.tsx  # Add client-side code validation
-```
+- `backend/src/models/game.ts` — `Room`, `Participant`, `RoomSnapshot`
+- `backend/src/services/roomStore.ts` — CRUD, host transfer, stale prune, start
+- `backend/src/api/rooms.ts` — route handlers
+- `backend/src/api/schemas.ts` — Zod schemas, `ROOM_CODE_REGEX`
+- `backend/src/services/roomStore.test.ts` — store unit tests
+
+**Frontend**
+
+- `frontend/src/services/api.ts` — REST client
+- `frontend/src/state/roomStore.ts` — session, polling helpers, create/join/leave/start
+- `frontend/src/pages/CreateRoomPage.tsx`, `JoinRoomPage.tsx`, `LobbyPage.tsx`
+- `frontend/src/routes/index.tsx` — `/lobby`, `/game`
+
+## Implementation Sequence
+
+1. Models + `roomStore` (host, leave, transfer, cleanup)
+2. Zod schemas + routes (`leave`, code validation)
+3. Frontend API + store session persistence
+4. Lobby polling + backoff; **no** `leave` on unmount
+5. `pagehide` leave; host-only start; US5 navigation to `/game`
+6. FR-016/017: `storePlayerNameAsIs()` — no trim, no `playerN` defaults, duplicate names OK
+
+## Testing Strategy
+
+| Layer | Command | Focus |
+|-------|---------|--------|
+| Backend | `cd backend && npm test` | Codes, host transfer, empty names, duplicates, start gates |
+| Frontend | `cd frontend && npm test` | API body shape for `playerName` |
+| Manual | Two tabs | Create/join, poll join/leave, host transfer, start, empty/duplicate names |
+
+**Two-tab checklist**
+
+1. Create room (blank name) → lobby shows empty name, host badge
+2. Second tab join same code (duplicate name allowed) → both see 2 players within ~3s
+3. Non-host has no Start control
+4. Host Start with 2+ players → both reach game; lobby unmount did not call leave
+5. Invalid code → client + server error messages
+6. Create with name `"  Ali  "` → lobby shows spaces preserved
+
+## Risks & Mitigations
+
+| Risk | Mitigation |
+|------|------------|
+| React Strict Mode double-mount calls leave | Leave only on explicit button + `pagehide` (FR-012) |
+| Ghost participants after tab close | `lastSeenAt` heartbeat + 15s eviction |
+| Room code collision | Regenerate up to 10 attempts (`generateUniqueCode`) |
+| Duplicate display names confuse UI | Identify drawer/host by `isHost` / `participantId`, not name alone |
+
+## Phase Artifacts
+
+| Artifact | Path |
+|----------|------|
+| Research | `plans/001-room-management/research.md` |
+| Data model | `plans/001-room-management/data-model.md` |
+| API contract | `plans/001-room-management/contracts/api-endpoints.md` |
+| Store contract | `plans/001-room-management/contracts/frontend-store.md` |
+| Quickstart | `plans/001-room-management/quickstart.md` |
+| Tasks | `tasks/001-room-management/tasks.md` |
 
 ## Dependencies
 
-**No new dependencies required** - all functionality can be implemented using existing stack:
+No new npm packages. Uses existing Express, Zod, React, Vitest stack.
 
-- Backend: Express routing, Zod validation, in-memory Map storage
-- Frontend: React hooks (useEffect for polling), existing roomStore pattern
-- HTTP polling using existing fetch patterns with setInterval/setTimeout for backoff
+## Out of Scope (this feature)
+
+Drawing, guesses, scoring, drawer/word assignment (see `002-game-start-drawer`), auth, persistence, WebSockets.

@@ -21,7 +21,7 @@ Create a new game room with the requesting player as host.
   "playerName": "string (optional, max 50 chars)"
 }
 ```
-Omit `playerName` or send blank/whitespace to receive default name `player1`.
+Omit `playerName` to store `""`. Any string (including whitespace-only) is stored as-is with no trim (no server default).
 
 **Response (201):**
 ```json
@@ -63,7 +63,7 @@ Join an existing room as a participant.
   "playerName": "string (optional, max 50 chars)"
 }
 ```
-Omit `playerName` or send blank/whitespace to receive the lowest unused `playerN` in the room (e.g. `player2` when `player1` exists).
+Omit `playerName` for `""`, or send any string stored as-is. Duplicate display names in one room are allowed.
 
 **Response (200):**
 ```json
@@ -94,7 +94,7 @@ Omit `playerName` or send blank/whitespace to receive the lowest unused `playerN
 ```
 
 **Errors:**
-- `400`: Invalid room code format or player name
+- `400`: Invalid room code format, or player name over 50 characters (name content never rejected; whitespace preserved)
 - `404`: Room not found
 - `400`: Duplicate join (player already in room)
 
@@ -255,10 +255,11 @@ interface ParticipantSnapshot {
 - **Invalid**: `"abc1"` (lowercase), `"AB"` (too short), `"1234567"` (too long)
 
 ### Player Names  
-- **Optional**: May be omitted on create/join
-- **Length**: When provided, 1–50 characters after trimming
-- **Default**: Server assigns `player1` on create; lowest unused `playerN` on join when omitted or blank
-- **Processing**: Leading/trailing whitespace trimmed; empty string treated as omitted
+- **Optional**: May be omitted on create/join; MUST NOT return `400` solely for missing, empty, or whitespace-only input
+- **Length**: MUST be at most 50 characters or `400` with clear message (empty string allowed)
+- **No defaults**: Backend MUST NOT assign `player1`, `player2`, etc.
+- **Duplicates**: Same display name MAY appear on multiple participants in one room
+- **Processing**: No trim; missing → `""`; whitespace preserved as submitted
 
 ### Participant IDs
 - **Format**: UUID v4 

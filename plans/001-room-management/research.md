@@ -120,16 +120,23 @@ const transferHost = (room: Room, leavingParticipantId: string): void => {
 
 ---
 
-## Default Player Names (FR-016)
+## Player Names — As-Is, No Trim (FR-016)
 
-**Decision**: `playerName` optional on create/join; server assigns `player1` for new rooms and lowest unused `playerN` when joining without a name.
+**Decision**: `playerName` optional on create/join; store the string exactly as provided (no trim). Backend MUST NOT assign `player1`, `player2`, etc.
 
 **Rationale**:
-- Faster onboarding — room code is the only required field on join
-- Predictable defaults for demos and two-tab testing
-- Custom names still supported when provided (max 50 chars)
+- Display names are opaque labels; spaces are meaningful
+- Room code remains the only required field on join
 
-**Implementation**: `roomStore.resolvePlayerName()` scans existing `playerN` names in the room and picks the smallest free index.
+**Implementation**: `roomStore.storePlayerNameAsIs()` returns `name ?? ""`.
+
+---
+
+## Duplicate Display Names (FR-017)
+
+**Decision**: Multiple participants in the same room MAY share the same display name; no uniqueness validation.
+
+**Implementation**: No duplicate-name checks in `createRoom` or `joinRoom`.
 
 ---
 

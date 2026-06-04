@@ -55,7 +55,7 @@ description: "Task list for Room Management System feature"
 
 **Goal**: A player creates a room, receives a unique code, and is designated host in the lobby
 
-**Independent Test**: Create a room from `CreateRoomPage`, see code on lobby, confirm you are host and alone; start game disabled
+**Independent Test**: Create a room from `CreateRoomPage`, see code on lobby, confirm you are host and alone; start disabled; name `"  Ali  "` appears with spaces preserved
 
 ### Implementation for User Story 1
 
@@ -64,9 +64,11 @@ description: "Task list for Room Management System feature"
 - [X] T012 [US1] Return `hostId` and host flags in `POST /rooms` handler in `backend/src/api/rooms.ts`
 - [X] T013 [P] [US1] Persist session via `roomStore.createRoom()` and navigate to `/lobby` in `frontend/src/pages/CreateRoomPage.tsx`
 - [X] T014 [US1] Display room code via `RoomCodeBadge` and host-only lobby state in `frontend/src/pages/LobbyPage.tsx` (solo player, start disabled)
-- [X] T040 [P] [US1] Allow create without player name in `frontend/src/pages/CreateRoomPage.tsx`; backend assigns `player1` when omitted (FR-016)
+- [X] T040 [P] [US1] Allow create without player name in `frontend/src/pages/CreateRoomPage.tsx`; backend stores empty string when omitted (FR-016)
+- [X] T048 [P] [US1] Implement `storePlayerNameAsIs()` in `backend/src/services/roomStore.ts` (no trim, no `playerN` defaults)
+- [X] T049 [P] [US1] Pass raw `playerName` from `CreateRoomPage.tsx` through `frontend/src/services/api.ts` without trimming
 
-**Checkpoint**: Room creation works end-to-end without a second player
+**Checkpoint**: Room creation works end-to-end; names stored as-is per FR-016
 
 ---
 
@@ -82,9 +84,10 @@ description: "Task list for Room Management System feature"
 - [X] T016 [US2] Return updated snapshot from `POST /rooms/:code/join` in `backend/src/api/rooms.ts`
 - [X] T017 [P] [US2] Wire `JoinRoomPage` name + code form to `roomStore.joinRoom()` in `frontend/src/pages/JoinRoomPage.tsx`
 - [X] T018 [US2] Render participant list with host indicator in `frontend/src/pages/LobbyPage.tsx`
-- [X] T019 [US2] Disable join submit only when room code empty in `frontend/src/pages/JoinRoomPage.tsx`; name optional (FR-016)
+- [X] T019 [US2] Disable join submit only when room code empty in `frontend/src/pages/JoinRoomPage.tsx`; name optional, stored as-is (FR-016)
+- [X] T050 [P] [US2] Pass raw `playerName` from `JoinRoomPage.tsx` without trimming; allow duplicate display names (FR-017)
 
-**Checkpoint**: Two-browser join flow shows consistent participants and host
+**Checkpoint**: Two-browser join flow shows consistent participants and host; duplicate names allowed
 
 ---
 
@@ -156,8 +159,10 @@ description: "Task list for Room Management System feature"
 
 - [X] T036 [P] Add Vitest cases for host transfer, empty-room cleanup, and stale-participant eviction (~15s) in `backend/src/services/roomStore.test.ts`
 - [X] T037 [P] Add Vitest cases for room code Zod schemas in `backend/src/api/schemas.test.ts`
-- [X] T038 Run two-tab manual test checklist in `plans/001-room-management/quickstart.md` plus: (a) two rooms isolated; (b) leave then rejoin; (c) host start moves both tabs to `/game`; (d) close tab B without leave—tab A removes B within ~15s; (e) throttle network—lobby shows error then recovers via backoff; (f) create room in dev (Strict Mode)—lobby stays, no `POST …/leave` before Leave or tab close
+- [X] T051 [P] Add Vitest cases for as-is names: whitespace preserved (`"  Ali  "`), omitted → `""`, duplicate names in `backend/src/services/roomStore.test.ts` and `backend/src/api/schemas.test.ts`
+- [X] T038 Run two-tab manual test checklist in `plans/001-room-management/quickstart.md` plus: (a) two rooms isolated; (b) leave then rejoin; (c) host start moves both tabs to `/game`; (d) close tab B without leave—tab A removes B within ~15s; (e) throttle network—lobby shows error then recovers via backoff; (f) create room in dev (Strict Mode)—lobby stays, no `POST …/leave` before Leave or tab close; (g) create with `"  Ali  "`—lobby shows spaces preserved
 - [X] T039 [P] Run `npm run build` in `backend/` and `frontend/` and fix any type errors
+- [X] T052 Align `specs/001-room-management/spec.md` FR-016/FR-017 with plan and implementation (as-is, no trim)
 
 ---
 
@@ -191,7 +196,8 @@ description: "Task list for Room Management System feature"
 - **US1**: T013 parallel with backend T010–T012 once T008 done
 - **US3**: T020 and T022 in parallel
 - **US4**: T027 parallel with backend T024–T026
-- **Polish**: T036, T037, T039 in parallel
+- **Polish**: T036, T037, T051, T039 in parallel
+- **FR-016 refresh**: T048, T049, T050 in parallel (backend + both join/create pages)
 
 ---
 
@@ -240,6 +246,7 @@ T028 → T029
 
 - No new npm dependencies per `plans/001-room-management/plan.md`
 - HTTP polling only; no WebSockets
-- Display names are optional on `JoinRoomPage` / `CreateRoomPage`; server defaults to `player1`, `player2`, … (FR-016)
+- Display names optional; stored as-is with no trim (FR-016); duplicate names allowed (FR-017)
+- 2026-06-04: strict as-is names — whitespace preserved (e.g. `"  Ali  "`)
 - Game drawing mechanics remain out of scope; US5 uses `POST /rooms/:code/start` + poll-driven `/game` navigation (T043, T035, T042)
 - FR-012 disconnects: server evicts stale participants (~15s without poll heartbeat); client calls leave on `pagehide` or explicit Leave only — never on React unmount (T046)
