@@ -173,7 +173,7 @@ Maintain these artifacts throughout the lab:
 
 ### Scenario 2 — Game Start & Drawer Flow
 
-**Given** a game is starting and player names are trimmed (empty/whitespace-only rejected with a message), **When** the first round begins, **Then** the host (or first player) becomes the clearly-identified drawer, and the secret word (deterministically selected from the starter list) is visible only to the drawer.
+**Given** a game is starting and player names are stored as entered (no trim; no backend defaults; duplicate names allowed), **When** the first round begins, **Then** the host (or first player) becomes the clearly-identified drawer, and the secret word (deterministically selected from the starter list) is visible only to the drawer.
 
 ### Scenario 3 — Gameplay Interaction
 
@@ -190,7 +190,7 @@ Work through the scenarios in order and complete each checkpoint before moving t
 | Group | Scenario | What You Should Have By The End |
 |-------|----------|-------------------------------|
 | 1. Room setup and lobby | Scenario 1 | Host tracking on room creation, join validation with clear error messages, verified multi-room isolation, automatic lobby polling within about 2 seconds, host-only start with 2-player minimum |
-| 2. Game start and drawer flow | Scenario 2 | Player name validation (trim, reject empty), drawer assignment, deterministic secret word selection, drawer-only word visibility |
+| 2. Game start and drawer flow | Scenario 2 | Player names as-is (no trim), drawer assignment, deterministic secret word selection, drawer-only word visibility |
 | 3. Gameplay interaction | Scenario 3 | Interactive drawing canvas, clear canvas, guess submission with validation, synced guess history via polling, deterministic scoring |
 | 4. Result, restart, and final validation | Scenario 4 | Shared result state visible to all players, clean restart to lobby with players preserved and round state cleared |
 
