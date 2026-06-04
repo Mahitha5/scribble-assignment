@@ -6,6 +6,28 @@ describe("api service", () => {
     vi.stubGlobal("fetch", vi.fn());
   });
 
+  it("createRoom sends empty playerName when not provided", async () => {
+    const mockResponse = {
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          participantId: "p1",
+          room: { code: "ABCD", status: "lobby", participants: [] }
+        })
+    };
+    vi.mocked(fetch).mockResolvedValue(mockResponse as unknown as Response);
+
+    await api.createRoom();
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/rooms"),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ playerName: "" })
+      })
+    );
+  });
+
   it("createRoom sends POST to /rooms with playerName in body", async () => {
     const mockResponse = {
       ok: true,

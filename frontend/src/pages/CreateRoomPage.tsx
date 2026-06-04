@@ -17,7 +17,8 @@ export function CreateRoomPage() {
       await roomStore.createRoom(playerName);
       navigate("/lobby");
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to create room");
+      const raw = caughtError instanceof Error ? caughtError.message : "Unable to create room";
+      setError(raw);
     }
   }
 
@@ -26,11 +27,11 @@ export function CreateRoomPage() {
       <PageHeader
         kicker="New lobby"
         title="Create Room"
-        description="Pick a player name, create a room, and continue into the lobby."
+        description="Optionally enter a display name, or leave blank for an empty name."
       />
       <form className="form" onSubmit={handleSubmit}>
         <label className="form__field">
-          <span>Player name</span>
+          <span>Player name (optional)</span>
           <input
             className="form__input"
             value={playerName}

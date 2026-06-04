@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/PageHeader";
 import { useRoomStore } from "../state/roomStore";
 
+const ROOM_CODE_PATTERN = /^[A-Z0-9]{4,6}$/;
+
 export function JoinRoomPage() {
   const [playerName, setPlayerName] = useState("");
   const [roomCode, setRoomCode] = useState("");
@@ -10,15 +12,28 @@ export function JoinRoomPage() {
   const navigate = useNavigate();
   const roomStore = useRoomStore();
 
+  const normalizedCode = roomCode.trim().toUpperCase();
+  const canSubmit = normalizedCode.length > 0;
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (!canSubmit) {
+      return;
+    }
+
+    if (!ROOM_CODE_PATTERN.test(normalizedCode)) {
+      setError("Room code must be 4-6 uppercase letters and numbers.");
+      return;
+    }
+
     try {
       setError(null);
-      await roomStore.joinRoom(roomCode.toUpperCase(), playerName);
+      await roomStore.joinRoom(normalizedCode, playerName);
       navigate("/lobby");
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Unable to join room");
+      const raw = caughtError instanceof Error ? caughtError.message : "Unable to join room";
+      setError(raw);
     }
   }
 
@@ -27,11 +42,11 @@ export function JoinRoomPage() {
       <PageHeader
         kicker="Existing lobby"
         title="Join Room"
-        description="Enter your player name and the room code to join an existing lobby."
+        description="Enter the room code to join. Display name is optional (blank is stored as empty)."
       />
       <form className="form" onSubmit={handleSubmit}>
         <label className="form__field">
-          <span>Player name</span>
+          <span>Player name (optional)</span>
           <input
             className="form__input"
             value={playerName}
@@ -47,11 +62,13 @@ export function JoinRoomPage() {
             value={roomCode}
             onChange={(event) => setRoomCode(event.target.value.toUpperCase())}
             placeholder="ABCD"
+            maxLength={6}
+            required
           />
         </label>
         {error ? <p className="form__error">{error}</p> : null}
         <div className="button-row">
-          <button className="button button--primary" type="submit">
+          <button className="button button--primary" type="submit" disabled={!canSubmit}>
             Join Lobby
           </button>
           <button className="button button--secondary" type="button" onClick={() => navigate("/")}>

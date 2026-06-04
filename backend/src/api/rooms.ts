@@ -3,10 +3,19 @@ import {
   createRoomSchema,
   HttpError,
   joinRoomSchema,
+  leaveRoomSchema,
   roomCodeParamsSchema,
-  roomViewerQuerySchema
+  roomViewerQuerySchema,
+  startRoomSchema
 } from "./schemas.js";
-import { createRoom, getRoom, joinRoom, toRoomSnapshot } from "../services/roomStore.js";
+import {
+  createRoom,
+  getRoom,
+  joinRoom,
+  leaveRoom,
+  startGame,
+  toRoomSnapshot
+} from "../services/roomStore.js";
 
 export function createRoomsRouter() {
   const router = Router();
@@ -28,11 +37,14 @@ export function createRoomsRouter() {
   router.post("/:code/join", (request, response, next) => {
     try {
       const { code } = roomCodeParamsSchema.parse(request.params);
-      const { playerName } = joinRoomSchema.parse(request.body);
-      const result = joinRoom(code.toUpperCase(), playerName);
+      const { playerName, participantId } = joinRoomSchema.parse(request.body);
+      const result = joinRoom(code, playerName, participantId);
 
-      if (!result) {
-        throw new HttpError(404, "Unable to join room");
+      if (!result.ok) {
+        if (result.reason === "not_found") {
+          throw new HttpError(404, "Room not found");
+        }
+        throw new HttpError(400, "You are already in this room");
       }
 
       response.json({
@@ -44,14 +56,60 @@ export function createRoomsRouter() {
     }
   });
 
+  router.post("/:code/leave", (request, response, next) => {
+    try {
+      const { code } = roomCodeParamsSchema.parse(request.params);
+      const { participantId } = leaveRoomSchema.parse(request.body);
+      const result = leaveRoom(code, participantId);
+
+      if (!result.ok) {
+        if (result.reason === "not_found") {
+          throw new HttpError(404, "Room not found");
+        }
+        throw new HttpError(404, "Participant not found in room");
+      }
+
+      response.json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.post("/:code/start", (request, response, next) => {
+    try {
+      const { code } = roomCodeParamsSchema.parse(request.params);
+      const { participantId } = startRoomSchema.parse(request.body);
+      const result = startGame(code, participantId);
+
+      if (!result.ok) {
+        if (result.reason === "not_found") {
+          throw new HttpError(404, "Room not found");
+        }
+        if (result.reason === "not_host") {
+          throw new HttpError(403, "Only the host can start the game");
+        }
+        if (result.reason === "not_enough_players") {
+          throw new HttpError(400, "At least 2 players are required to start");
+        }
+        throw new HttpError(400, "Game has already started");
+      }
+
+      response.json({
+        room: toRoomSnapshot(result.room, participantId)
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   router.get("/:code", (request, response, next) => {
     try {
       const { code } = roomCodeParamsSchema.parse(request.params);
       const { participantId } = roomViewerQuerySchema.parse(request.query);
-      const room = getRoom(code.toUpperCase());
+      const room = getRoom(code, participantId);
 
       if (!room) {
-        throw new HttpError(404, "Unable to load room");
+        throw new HttpError(404, "Room not found");
       }
 
       response.json({

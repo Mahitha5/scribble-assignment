@@ -1,15 +1,19 @@
 export type ParticipantRole = "drawer" | "guesser";
+export type RoomStatus = "lobby" | "active";
 
-export interface Participant {
+export interface ParticipantSnapshot {
   id: string;
   name: string;
   joinedAt: string;
+  isHost: boolean;
 }
 
 export interface RoomSnapshot {
   code: string;
-  status: "lobby";
-  participants: Participant[];
+  hostId: string;
+  status: RoomStatus;
+  canStart: boolean;
+  participants: ParticipantSnapshot[];
   availableWords: string[];
   roles: ParticipantRole[];
 }
@@ -19,7 +23,7 @@ export interface RoomSessionResponse {
   room: RoomSnapshot;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001/bug";
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 
 async function request<T>(path: string, init?: RequestInit) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -41,17 +45,33 @@ async function request<T>(path: string, init?: RequestInit) {
   return (await response.json()) as T;
 }
 
+function playerNameBody(playerName?: string) {
+  return { playerName: playerName ?? "" };
+}
+
 export const api = {
-  createRoom(playerName: string) {
+  createRoom(playerName?: string) {
     return request<RoomSessionResponse>("/rooms", {
       method: "POST",
-      body: JSON.stringify({ playerName })
+      body: JSON.stringify(playerNameBody(playerName))
     });
   },
-  joinRoom(code: string, playerName: string) {
+  joinRoom(code: string, playerName?: string) {
     return request<RoomSessionResponse>(`/rooms/${encodeURIComponent(code)}/join`, {
       method: "POST",
-      body: JSON.stringify({ playerName })
+      body: JSON.stringify(playerNameBody(playerName))
+    });
+  },
+  leaveRoom(code: string, participantId: string) {
+    return request<{ success: boolean }>(`/rooms/${encodeURIComponent(code)}/leave`, {
+      method: "POST",
+      body: JSON.stringify({ participantId })
+    });
+  },
+  startGame(code: string, participantId: string) {
+    return request<{ room: RoomSnapshot }>(`/rooms/${encodeURIComponent(code)}/start`, {
+      method: "POST",
+      body: JSON.stringify({ participantId })
     });
   },
   fetchRoom(code: string, participantId?: string) {

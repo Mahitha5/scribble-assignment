@@ -1,15 +1,88 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../components/Card";
 import { PageHeader } from "../components/PageHeader";
 import { RoomCodeBadge } from "../components/RoomCodeBadge";
-import { useRoomState, useRoomStore } from "../state/roomStore";
+import { useIsHost, useRoomState, useRoomStore } from "../state/roomStore";
+
+const POLL_BASE_MS = 2000;
+const POLL_MAX_MS = 30_000;
 
 export function LobbyPage() {
   const navigate = useNavigate();
   const roomStore = useRoomStore();
-  const { room, error, isLoading } = useRoomState();
-  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const isHost = useIsHost();
+  const { room, error, isLoading, participantId } = useRoomState();
+  const [pollError, setPollError] = useState<string | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
+  const skipLeaveOnUnmountRef = useRef(false);
+
+  useEffect(() => {
+    if (!room?.code) {
+      return;
+    }
+
+    let cancelled = false;
+    let delayMs = POLL_BASE_MS;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const poll = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      try {
+        const snapshot = await roomStore.fetchRoom();
+        if (cancelled) {
+          return;
+        }
+
+        setPollError(null);
+        delayMs = POLL_BASE_MS;
+
+        if (snapshot?.status === "active") {
+          skipLeaveOnUnmountRef.current = true;
+          navigate("/game", { replace: true });
+          return;
+        }
+      } catch {
+        if (cancelled) {
+          return;
+        }
+
+        setPollError("Connection issue — retrying…");
+        delayMs = Math.min(delayMs * 2, POLL_MAX_MS);
+      }
+
+      timeoutId = setTimeout(() => {
+        void poll();
+      }, delayMs);
+    };
+
+    void poll();
+
+    return () => {
+      cancelled = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [navigate, room?.code, roomStore]);
+
+  // Best-effort leave on tab close only — not on React unmount (Strict Mode remount
+  // and in-app navigation to /game would otherwise POST /leave and clear the session).
+  useEffect(() => {
+    function handlePageHide() {
+      if (!skipLeaveOnUnmountRef.current) {
+        void roomStore.leaveRoom();
+      }
+    }
+
+    window.addEventListener("pagehide", handlePageHide);
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, [roomStore]);
 
   useEffect(() => {
     if (!room) {
@@ -17,18 +90,35 @@ export function LobbyPage() {
     }
   }, [navigate, room]);
 
-  async function handleRefresh() {
-    try {
-      setRefreshError(null);
-      await roomStore.fetchRoom();
-    } catch (caughtError) {
-      setRefreshError(caughtError instanceof Error ? caughtError.message : "Unable to refresh room");
+  async function handleStartGame() {
+    if (!isHost || !room?.canStart) {
+      return;
     }
+
+    try {
+      setIsStarting(true);
+      await roomStore.startGame();
+      skipLeaveOnUnmountRef.current = true;
+      navigate("/game", { replace: true });
+    } catch {
+      // Error surfaced via room store state
+    } finally {
+      setIsStarting(false);
+    }
+  }
+
+  async function handleLeave() {
+    skipLeaveOnUnmountRef.current = true;
+    await roomStore.leaveRoom();
+    navigate("/", { replace: true });
   }
 
   if (!room) {
     return null;
   }
+
+  const statusMessage =
+    error ?? pollError ?? (isHost ? "You are the host." : "Waiting for the host to start the game.");
 
   return (
     <section className="panel placeholder-page">
@@ -49,7 +139,11 @@ export function LobbyPage() {
             <ul className="player-list">
               {room.participants.map((participant) => (
                 <li key={participant.id}>
-                  <span>{participant.name}</span>
+                  <span>
+                    {participant.name}
+                    {participant.isHost ? " (Host)" : ""}
+                    {participant.id === participantId ? " — you" : ""}
+                  </span>
                   <span className="player-list__meta">joined</span>
                 </li>
               ))}
@@ -58,20 +152,36 @@ export function LobbyPage() {
         </Card>
 
         <Card title="Status">
-          <p className="status-line" style={{ backgroundColor: isLoading ? '#fef3c7' : '#e0e7ff', color: isLoading ? '#b45309' : '#3730a3' }}>
-            {isLoading ? "Refreshing players..." : "Ready to play"}
+          <p
+            className="status-line"
+            style={{
+              backgroundColor: isLoading || pollError ? "#fef3c7" : "#e0e7ff",
+              color: isLoading || pollError ? "#b45309" : "#3730a3"
+            }}
+          >
+            {isLoading ? "Updating lobby…" : pollError ? "Reconnecting…" : "Lobby open"}
           </p>
-          <p style={{ marginTop: '8px' }}>{error ?? refreshError ?? "Waiting for the host to start the game."}</p>
+          <p style={{ marginTop: "8px" }}>{statusMessage}</p>
+          {room.participants.length < 2 ? (
+            <p style={{ marginTop: "8px" }}>Need at least 2 players to start.</p>
+          ) : null}
         </Card>
       </div>
 
       <div className="button-row button-row--spread">
-        <button className="button button--secondary" disabled={isLoading} onClick={handleRefresh}>
-          {isLoading ? "Refreshing..." : "Refresh Room"}
+        <button className="button button--secondary" type="button" onClick={() => void handleLeave()}>
+          Leave Room
         </button>
-        <button className="button button--primary" onClick={() => navigate("/game")}>
-          Start Game
-        </button>
+        {isHost ? (
+          <button
+            className="button button--primary"
+            type="button"
+            disabled={!room.canStart || isStarting || isLoading}
+            onClick={() => void handleStartGame()}
+          >
+            {isStarting ? "Starting…" : "Start Game"}
+          </button>
+        ) : null}
       </div>
     </section>
   );

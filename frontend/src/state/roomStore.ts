@@ -18,6 +18,16 @@ export interface RoomState {
 
 type Listener = () => void;
 
+function mapApiError(message: string): string {
+  if (message.includes("Room not found") || message.includes("Unable to join")) {
+    return "That room code is invalid or the room no longer exists.";
+  }
+  if (message.includes("Room code must be")) {
+    return message;
+  }
+  return message;
+}
+
 class RoomStore {
   private state: RoomState = {
     room: null,
@@ -37,12 +47,16 @@ class RoomStore {
 
   getSnapshot = () => this.state;
 
+  private emit() {
+    this.listeners.forEach((listener) => listener());
+  }
+
   private setState(nextState: Partial<RoomState>) {
     this.state = {
       ...this.state,
       ...nextState
     };
-    this.listeners.forEach((listener) => listener());
+    this.emit();
   }
 
   private async withLoading<T>(operation: () => Promise<T>) {
@@ -54,7 +68,8 @@ class RoomStore {
     try {
       return await operation();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unexpected request failure";
+      const raw = error instanceof Error ? error.message : "Unexpected request failure";
+      const message = mapApiError(raw);
       this.setState({ error: message });
       throw error;
     } finally {
@@ -77,16 +92,51 @@ class RoomStore {
     });
   }
 
-  async createRoom(playerName: string) {
+  clearSession() {
+    this.setState({
+      room: null,
+      participantId: null,
+      error: null,
+      isLoading: false
+    });
+  }
+
+  async createRoom(playerName?: string) {
     const response = await this.withLoading(() => api.createRoom(playerName));
     this.setRoomSession(response);
     return response;
   }
 
-  async joinRoom(code: string, playerName: string) {
+  async joinRoom(code: string, playerName?: string) {
     const response = await this.withLoading(() => api.joinRoom(code, playerName));
     this.setRoomSession(response);
     return response;
+  }
+
+  async leaveRoom() {
+    const { room, participantId } = this.state;
+    if (!room || !participantId) {
+      return;
+    }
+
+    try {
+      await api.leaveRoom(room.code, participantId);
+    } catch {
+      // Best-effort leave (tab close); stale eviction handles ghosts server-side.
+    } finally {
+      this.clearSession();
+    }
+  }
+
+  async startGame() {
+    const { room, participantId } = this.state;
+    if (!room || !participantId) {
+      throw new Error("Not in a room");
+    }
+
+    const response = await this.withLoading(() => api.startGame(room.code, participantId));
+    this.setRoomSnapshot(response.room);
+    return response.room;
   }
 
   async fetchRoom() {
@@ -94,9 +144,18 @@ class RoomStore {
       return null;
     }
 
-    const response = await api.fetchRoom(this.state.room.code, this.state.participantId ?? undefined);
-    this.setRoomSnapshot(response.room);
-    return response.room;
+    try {
+      const response = await api.fetchRoom(
+        this.state.room.code,
+        this.state.participantId ?? undefined
+      );
+      this.setRoomSnapshot(response.room);
+      return response.room;
+    } catch (error) {
+      const raw = error instanceof Error ? error.message : "Unable to refresh lobby";
+      this.setState({ error: mapApiError(raw) });
+      throw error;
+    }
   }
 }
 
@@ -127,4 +186,9 @@ export function useRoomStore() {
 export function useRoomState() {
   const store = useRoomStore();
   return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+}
+
+export function useIsHost() {
+  const { room, participantId } = useRoomState();
+  return Boolean(room && participantId && room.hostId === participantId);
 }
