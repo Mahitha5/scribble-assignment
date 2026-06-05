@@ -3,6 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/PageHeader";
 import { useRoomStore } from "../state/roomStore";
 
+function validateRoomCode(code: string) {
+  const trimmed = code.trim();
+
+  if (!trimmed) {
+    return "Room code is required";
+  }
+
+  if (!/^[A-Za-z0-9]{4}$/.test(trimmed)) {
+    return "Invalid room code format";
+  }
+
+  return null;
+}
+
 export function JoinRoomPage() {
   const [playerName, setPlayerName] = useState("");
   const [roomCode, setRoomCode] = useState("");
@@ -13,9 +27,16 @@ export function JoinRoomPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    const validationError = validateRoomCode(roomCode);
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     try {
       setError(null);
-      await roomStore.joinRoom(roomCode.toUpperCase(), playerName);
+      await roomStore.joinRoom(roomCode.trim(), playerName);
       navigate("/lobby");
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Unable to join room");
@@ -45,7 +66,7 @@ export function JoinRoomPage() {
           <input
             className="form__input form__input--code"
             value={roomCode}
-            onChange={(event) => setRoomCode(event.target.value.toUpperCase())}
+            onChange={(event) => setRoomCode(event.target.value)}
             placeholder="ABCD"
           />
         </label>

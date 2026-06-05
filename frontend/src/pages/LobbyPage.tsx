@@ -3,32 +3,109 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "../components/Card";
 import { PageHeader } from "../components/PageHeader";
 import { RoomCodeBadge } from "../components/RoomCodeBadge";
+import { useLobbyPolling } from "../hooks/useLobbyPolling";
 import { useRoomState, useRoomStore } from "../state/roomStore";
 
 export function LobbyPage() {
   const navigate = useNavigate();
   const roomStore = useRoomStore();
-  const { room, error, isLoading } = useRoomState();
+  const { room, participantId, roomCode, error, isLoading } = useRoomState();
+  const { pollError, isRefreshing } = useLobbyPolling();
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [startError, setStartError] = useState<string | null>(null);
+  const [isStarting, setIsStarting] = useState(false);
+  const [initialLoadError, setInitialLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!room) {
+    if (!participantId || !roomCode) {
       navigate("/", { replace: true });
     }
-  }, [navigate, room]);
+  }, [navigate, participantId, roomCode]);
+
+  useEffect(() => {
+    if (!participantId || !roomCode) {
+      return;
+    }
+
+    let active = true;
+
+    async function loadInitialSnapshot() {
+      try {
+        setInitialLoadError(null);
+        await roomStore.fetchRoom();
+      } catch (caughtError) {
+        if (!active) {
+          return;
+        }
+
+        const message =
+          caughtError instanceof Error ? caughtError.message : "Unable to load room";
+
+        if (message.toLowerCase().includes("unable to load room")) {
+          roomStore.clearSession();
+          navigate("/", { replace: true });
+          return;
+        }
+
+        setInitialLoadError(message);
+      }
+    }
+
+    if (!room) {
+      void loadInitialSnapshot();
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [navigate, participantId, room, roomCode, roomStore]);
 
   async function handleRefresh() {
     try {
       setRefreshError(null);
       await roomStore.fetchRoom();
     } catch (caughtError) {
-      setRefreshError(caughtError instanceof Error ? caughtError.message : "Unable to refresh room");
+      const message = caughtError instanceof Error ? caughtError.message : "Unable to refresh room";
+
+      if (message.toLowerCase().includes("unable to load room")) {
+        roomStore.clearSession();
+        navigate("/", { replace: true });
+        return;
+      }
+
+      setRefreshError(message);
     }
   }
 
-  if (!room) {
-    return null;
+  async function handleStartGame() {
+    try {
+      setStartError(null);
+      setIsStarting(true);
+      await roomStore.startGame();
+      navigate("/game", { replace: true });
+    } catch (caughtError) {
+      setStartError(caughtError instanceof Error ? caughtError.message : "Unable to start game");
+    } finally {
+      setIsStarting(false);
+    }
   }
+
+  if (!participantId || !roomCode || !room) {
+    return (
+      <section className="panel placeholder-page">
+        <p>{initialLoadError ?? "Loading lobby..."}</p>
+      </section>
+    );
+  }
+
+  const statusMessage =
+    pollError ??
+    refreshError ??
+    startError ??
+    error ??
+    (room.isViewerHost && !room.canStartGame
+      ? "Waiting for more players before you can start."
+      : "Waiting for the host to start the game.");
 
   return (
     <section className="panel placeholder-page">
@@ -50,7 +127,9 @@ export function LobbyPage() {
               {room.participants.map((participant) => (
                 <li key={participant.id}>
                   <span>{participant.name}</span>
-                  <span className="player-list__meta">joined</span>
+                  <span className="player-list__meta">
+                    {participant.isHost ? "host" : "joined"}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -58,10 +137,16 @@ export function LobbyPage() {
         </Card>
 
         <Card title="Status">
-          <p className="status-line" style={{ backgroundColor: isLoading ? '#fef3c7' : '#e0e7ff', color: isLoading ? '#b45309' : '#3730a3' }}>
-            {isLoading ? "Refreshing players..." : "Ready to play"}
+          <p
+            className="status-line"
+            style={{
+              backgroundColor: isLoading || isRefreshing ? "#fef3c7" : "#e0e7ff",
+              color: isLoading || isRefreshing ? "#b45309" : "#3730a3"
+            }}
+          >
+            {isLoading || isRefreshing ? "Refreshing players..." : "Ready to play"}
           </p>
-          <p style={{ marginTop: '8px' }}>{error ?? refreshError ?? "Waiting for the host to start the game."}</p>
+          <p style={{ marginTop: "8px" }}>{statusMessage}</p>
         </Card>
       </div>
 
@@ -69,9 +154,15 @@ export function LobbyPage() {
         <button className="button button--secondary" disabled={isLoading} onClick={handleRefresh}>
           {isLoading ? "Refreshing..." : "Refresh Room"}
         </button>
-        <button className="button button--primary" onClick={() => navigate("/game")}>
-          Start Game
-        </button>
+        {room.canStartGame ? (
+          <button
+            className="button button--primary"
+            disabled={isStarting}
+            onClick={handleStartGame}
+          >
+            {isStarting ? "Starting..." : "Start Game"}
+          </button>
+        ) : null}
       </div>
     </section>
   );

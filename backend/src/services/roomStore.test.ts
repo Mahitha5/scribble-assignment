@@ -1,19 +1,145 @@
-import { describe, expect, it } from "vitest";
-import { createRoom, joinRoom } from "./roomStore.js";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  clearAllRooms,
+  createRoom,
+  evictIfAllParticipantsStale,
+  getRoomSnapshot,
+  joinRoom,
+  RoomStoreError,
+  setParticipantLastSeenAt,
+  startGame,
+  STALE_THRESHOLD_MS
+} from "./roomStore.js";
 
 describe("roomStore", () => {
-  it("createRoom returns a room with a 4-character uppercase code", () => {
+  beforeEach(() => {
+    clearAllRooms();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-06-05T12:00:00.000Z"));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    clearAllRooms();
+  });
+
+  it("createRoom returns a room with a 4-character uppercase code and host participant", () => {
     const result = createRoom("Alice");
 
     expect(result.room.code).toMatch(/^[A-Z0-9]{4}$/);
     expect(result.room.participants).toHaveLength(1);
     expect(result.room.participants[0].name).toBe("Alice");
+    expect(result.room.participants[0].isHost).toBe(true);
     expect(result.participantId).toBeDefined();
   });
 
-  it("joinRoom returns null for an unknown room code", () => {
-    const result = joinRoom("ZZZZ", "Bob");
+  it("stores omitted display names without coercion", () => {
+    const result = createRoom();
 
-    expect(result).toBeNull();
+    expect(result.room.participants[0].name).toBeUndefined();
+  });
+
+  it("stores whitespace-only display names as submitted", () => {
+    const result = createRoom("  ");
+
+    expect(result.room.participants[0].name).toBe("  ");
+  });
+
+  it("rejects duplicate omitted display names", () => {
+    const host = createRoom();
+    expect(() => joinRoom(host.room.code)).toThrow("Choose a different name");
+  });
+
+  it("rejects duplicate whitespace-only display names", () => {
+    const host = createRoom("  ");
+    expect(() => joinRoom(host.room.code, "  ")).toThrow("Choose a different name");
+  });
+
+  it("joinRoom throws for an unknown room code", () => {
+    expect(() => joinRoom("ZZZZ", "Bob")).toThrow(RoomStoreError);
+  });
+
+  it("joinRoom rejects duplicate names case-insensitively", () => {
+    const host = createRoom("Alex");
+    expect(() => joinRoom(host.room.code, "alex")).toThrow("Choose a different name");
+  });
+
+  it("joinRoom rejects malformed room codes", () => {
+    expect(() => joinRoom("AB", "Bob")).toThrow("Invalid room code format");
+  });
+
+  it("joinRoom accepts case-insensitive room codes", () => {
+    const host = createRoom("Host");
+    const guest = joinRoom(host.room.code.toLowerCase(), "Guest");
+
+    expect(guest.room.participants).toHaveLength(2);
+  });
+
+  it("joinRoom rejects rooms that already started", () => {
+    const host = createRoom("Host");
+    joinRoom(host.room.code, "Guest");
+    startGame(host.room.code, host.participantId);
+
+    expect(() => joinRoom(host.room.code, "Latecomer")).toThrow("Game already in progress");
+  });
+
+  it("startGame requires host and at least two players", () => {
+    const host = createRoom("Host");
+
+    expect(() => startGame(host.room.code, host.participantId)).toThrow("Waiting for more players");
+
+    const guest = joinRoom(host.room.code, "Guest");
+    expect(() => startGame(host.room.code, guest.participantId)).toThrow("Only the host can start the game");
+
+    const started = startGame(host.room.code, host.participantId);
+
+    expect(started.status).toBe("playing");
+    expect(started.canStartGame).toBe(false);
+  });
+
+  it("transfers host to the next joiner when the current host goes stale", () => {
+    const host = createRoom("Host");
+    const second = joinRoom(host.room.code, "Second");
+    joinRoom(host.room.code, "Third");
+
+    const staleAt = new Date(Date.now() - STALE_THRESHOLD_MS - 1).toISOString();
+    setParticipantLastSeenAt(host.room.code, host.participantId, staleAt);
+    setParticipantLastSeenAt(host.room.code, second.participantId, new Date().toISOString());
+
+    const snapshot = getRoomSnapshot(host.room.code, second.participantId);
+
+    expect(snapshot.participants.find((participant) => participant.id === second.participantId)?.isHost).toBe(
+      true
+    );
+    expect(snapshot.participants.find((participant) => participant.id === host.participantId)?.isHost).toBe(
+      false
+    );
+  });
+
+  it("evictIfAllParticipantsStale removes abandoned rooms", () => {
+    const host = createRoom("Host");
+    const staleAt = new Date(Date.now() - STALE_THRESHOLD_MS - 1).toISOString();
+    setParticipantLastSeenAt(host.room.code, host.participantId, staleAt);
+
+    expect(evictIfAllParticipantsStale(host.room.code)).toBe(true);
+    expect(() => joinRoom(host.room.code, "Guest")).toThrow("Unable to join room");
+  });
+
+  it("original host reconnects as non-host after transfer", () => {
+    const host = createRoom("Host");
+    const second = joinRoom(host.room.code, "Second");
+
+    const staleAt = new Date(Date.now() - STALE_THRESHOLD_MS - 1).toISOString();
+    setParticipantLastSeenAt(host.room.code, host.participantId, staleAt);
+    setParticipantLastSeenAt(host.room.code, second.participantId, new Date().toISOString());
+
+    getRoomSnapshot(host.room.code, second.participantId);
+
+    const reconnected = getRoomSnapshot(host.room.code, host.participantId);
+
+    expect(reconnected.isViewerHost).toBe(false);
+    expect(reconnected.participants.find((participant) => participant.id === second.participantId)?.isHost).toBe(
+      true
+    );
   });
 });
