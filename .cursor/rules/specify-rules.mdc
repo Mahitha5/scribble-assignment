@@ -5,8 +5,8 @@ alwaysApply: true
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan at
-`plans/002-game-start-drawer/plan.md` and related artifacts in that directory
+`plans/003-gameplay-interaction/plan.md` and related artifacts in that directory
 (`research.md`, `data-model.md`, `contracts/`, `quickstart.md`). The feature
-spec lives at `specs/002-game-start-drawer/spec.md`. Tasks live at
-`tasks/002-game-start-drawer/tasks.md`.
+spec lives at `specs/003-gameplay-interaction/spec.md`. Tasks live at
+`tasks/003-gameplay-interaction/tasks.md`.
 <!-- SPECKIT END -->
