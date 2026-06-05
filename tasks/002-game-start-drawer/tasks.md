@@ -30,8 +30,8 @@ description: "Task list for Game Start & Drawer Flow (Scenario 2)"
 
 **Purpose**: Confirm Scenario 1 baseline and review Scenario 2 contract delta
 
-- [ ] T001 Verify Scenario 1 lobby/start baseline (create, join, poll, start navigates to `/game`) per `plans/002-game-start-drawer/quickstart.md` prerequisites
-- [ ] T002 [P] Review `plans/002-game-start-drawer/contracts/rooms-api.md` delta against current `backend/src/api/rooms.ts` and `backend/src/services/roomStore.ts`
+- [x] T001 Verify Scenario 1 lobby/start baseline (create, join, poll, start navigates to `/game`) per `plans/002-game-start-drawer/quickstart.md` prerequisites
+- [x] T002 [P] Review `plans/002-game-start-drawer/contracts/rooms-api.md` delta against current `backend/src/api/rooms.ts` and `backend/src/services/roomStore.ts`
 
 ---
 
@@ -41,11 +41,11 @@ description: "Task list for Game Start & Drawer Flow (Scenario 2)"
 
 **⚠️ CRITICAL**: No user story work should begin until this phase is complete
 
-- [ ] T003 Add `drawerId` and `secretWord` to `Room`; add `drawerId`, `viewerRole`, and `wordDisplay` to `RoomSnapshot` in `backend/src/models/game.ts`
-- [ ] T004 Add `INVALID_PLAYER_NAMES` and `DUPLICATE_PLAYER_NAMES` to `RoomStoreError` in `backend/src/services/roomStore.ts`
-- [ ] T005 [P] Implement `selectSecretWord(roomCode)` using `(sum of uppercase char codes) mod 5` in `backend/src/services/roomStore.ts`
-- [ ] T006 [P] Implement `trimDisplayName` and `validateNamesForStart` (returns offender lobby names) in `backend/src/services/roomStore.ts`
-- [ ] T007 [P] Extend `RoomSnapshot` with `drawerId`, `viewerRole`, and `wordDisplay` in `frontend/src/services/api.ts`
+- [x] T003 Add `drawerId` and `secretWord` to `Room`; add `drawerId`, `viewerRole`, and `wordDisplay` to `RoomSnapshot` in `backend/src/models/game.ts`
+- [x] T004 Add `INVALID_PLAYER_NAMES` and `DUPLICATE_PLAYER_NAMES` to `RoomStoreError` in `backend/src/services/roomStore.ts`
+- [x] T005 [P] Implement `selectSecretWord(roomCode)` using `(sum of uppercase char codes) mod 5` in `backend/src/services/roomStore.ts`
+- [x] T006 [P] Implement `trimDisplayName` and `validateNamesForStart` (returns offender lobby names) in `backend/src/services/roomStore.ts`
+- [x] T007 [P] Extend `RoomSnapshot` with `drawerId`, `viewerRole`, and `wordDisplay` in `frontend/src/services/api.ts`
 
 **Checkpoint**: Types compile; helpers unit-testable; contract fields defined in `plans/002-game-start-drawer/data-model.md`
 
@@ -57,11 +57,11 @@ description: "Task list for Game Start & Drawer Flow (Scenario 2)"
 
 **Independent Test**: Two browsers — host starts with valid names succeeds; whitespace-only or trim-duplicate names block start with named error; room stays in lobby
 
-- [ ] T008 [US1] Call `validateNamesForStart` inside `startGame` before any round fields are set in `backend/src/services/roomStore.ts`
-- [ ] T009 [US1] Persist trimmed participant `name` values on successful start in `backend/src/services/roomStore.ts`
-- [ ] T010 [US1] Map `INVALID_PLAYER_NAMES` and `DUPLICATE_PLAYER_NAMES` to HTTP 400 with named messages in `backend/src/api/rooms.ts`
-- [ ] T011 [US1] Surface named start-validation errors via `startError` in `frontend/src/pages/LobbyPage.tsx`
-- [ ] T012 [US1] Add Vitest cases for empty-name rejection and duplicate-trim collision in `backend/src/services/roomStore.test.ts`
+- [x] T008 [US1] Call `validateNamesForStart` inside `startGame` before any round fields are set in `backend/src/services/roomStore.ts`
+- [x] T009 [US1] Persist trimmed participant `name` values on successful start in `backend/src/services/roomStore.ts`
+- [x] T010 [US1] Map `INVALID_PLAYER_NAMES` and `DUPLICATE_PLAYER_NAMES` to HTTP 400 with named messages in `backend/src/api/rooms.ts`
+- [x] T011 [US1] Surface named start-validation errors via `startError` in `frontend/src/pages/LobbyPage.tsx`
+- [x] T012 [US1] Add Vitest cases for empty-name rejection and duplicate-trim collision in `backend/src/services/roomStore.test.ts`
 
 **Checkpoint**: US1 acceptance scenarios 1–5 pass; failed start leaves `status: "lobby"` with no `drawerId`/`secretWord`
 
@@ -73,11 +73,11 @@ description: "Task list for Game Start & Drawer Flow (Scenario 2)"
 
 **Independent Test**: Two browsers — after start, host tab shows drawer role; guest tab shows host as drawer, guest as guesser; after host transfer, new host is drawer on start
 
-- [ ] T013 [US2] Set `drawerId` to the host participant's `id` on successful start in `backend/src/services/roomStore.ts`
-- [ ] T014 [US2] Populate `drawerId` and `viewerRole` in `toRoomSnapshot` when `status === "playing"` in `backend/src/services/roomStore.ts`
-- [ ] T015 [US2] Display drawer participant name and drawer badge visible to all players in `frontend/src/pages/GamePage.tsx`
-- [ ] T016 [US2] Show viewer role (drawer vs guesser) in Player Info panel in `frontend/src/pages/GamePage.tsx`
-- [ ] T017 [US2] Add Vitest case: successor host after transfer becomes `drawerId` on start in `backend/src/services/roomStore.test.ts`
+- [x] T013 [US2] Set `drawerId` to the host participant's `id` on successful start in `backend/src/services/roomStore.ts`
+- [x] T014 [US2] Populate `drawerId` and `viewerRole` in `toRoomSnapshot` when `status === "playing"` in `backend/src/services/roomStore.ts`
+- [x] T015 [US2] Display drawer participant name and drawer badge visible to all players in `frontend/src/pages/GamePage.tsx`
+- [x] T016 [US2] Show viewer role (drawer vs guesser) in Player Info panel in `frontend/src/pages/GamePage.tsx`
+- [x] T017 [US2] Add Vitest case: successor host after transfer becomes `drawerId` on start in `backend/src/services/roomStore.test.ts`
 
 **Checkpoint**: US2 acceptance scenarios 1–4 pass
 
@@ -89,10 +89,10 @@ description: "Task list for Game Start & Drawer Flow (Scenario 2)"
 
 **Independent Test**: Two browsers — drawer sees computed word for room code; guesser sees `Guess word` in word area and in poll responses; refresh preserves visibility
 
-- [ ] T018 [US3] Assign `secretWord` via `selectSecretWord(room.code)` on successful start in `backend/src/services/roomStore.ts`
-- [ ] T019 [US3] Compute role-filtered `wordDisplay` in `toRoomSnapshot` (never expose raw `secretWord` to guessers) in `backend/src/services/roomStore.ts`
-- [ ] T020 [US3] Add Word card rendering `wordDisplay` in `frontend/src/pages/GamePage.tsx`
-- [ ] T021 [US3] Add Vitest cases for deterministic word index and guesser `wordDisplay === "Guess word"` in `backend/src/services/roomStore.test.ts`
+- [x] T018 [US3] Assign `secretWord` via `selectSecretWord(room.code)` on successful start in `backend/src/services/roomStore.ts`
+- [x] T019 [US3] Compute role-filtered `wordDisplay` in `toRoomSnapshot` (never expose raw `secretWord` to guessers) in `backend/src/services/roomStore.ts`
+- [x] T020 [US3] Add Word card rendering `wordDisplay` in `frontend/src/pages/GamePage.tsx`
+- [x] T021 [US3] Add Vitest cases for deterministic word index and guesser `wordDisplay === "Guess word"` in `backend/src/services/roomStore.test.ts`
 
 **Checkpoint**: US3 acceptance scenarios 1–5 pass; same room code always yields same word
 
@@ -104,11 +104,11 @@ description: "Task list for Game Start & Drawer Flow (Scenario 2)"
 
 **Independent Test**: Two browsers — host and guest on `/game` within ~2s of start; game poll updates snapshot; direct `/game` refresh with session loads playing state
 
-- [ ] T022 [US4] Create `useGamePolling` hook with 2000ms `setInterval` in `frontend/src/hooks/useGamePolling.ts`
-- [ ] T023 [US4] Integrate `useGamePolling` in `frontend/src/pages/GamePage.tsx` with 404 session clear and redirect to `/`
-- [ ] T024 [US4] Fetch initial playing snapshot on `GamePage` mount when session exists in `frontend/src/pages/GamePage.tsx`
-- [ ] T025 [US4] Show first-round context (Round 1 label, scores-at-zero via `Scoreboard`, trimmed participant names) in `frontend/src/pages/GamePage.tsx`
-- [ ] T026 [US4] Confirm non-host lobby auto-navigate on `status === "playing"` remains correct in `frontend/src/hooks/useLobbyPolling.ts`
+- [x] T022 [US4] Create `useGamePolling` hook with 2000ms `setInterval` in `frontend/src/hooks/useGamePolling.ts`
+- [x] T023 [US4] Integrate `useGamePolling` in `frontend/src/pages/GamePage.tsx` with 404 session clear and redirect to `/`
+- [x] T024 [US4] Fetch initial playing snapshot on `GamePage` mount when session exists in `frontend/src/pages/GamePage.tsx`
+- [x] T025 [US4] Show first-round context (Round 1 label, scores-at-zero via `Scoreboard`, trimmed participant names) in `frontend/src/pages/GamePage.tsx`
+- [x] T026 [US4] Confirm non-host lobby auto-navigate on `status === "playing"` remains correct in `frontend/src/hooks/useLobbyPolling.ts`
 
 **Checkpoint**: US4 acceptance scenarios 1–3 pass
 
@@ -118,9 +118,9 @@ description: "Task list for Game Start & Drawer Flow (Scenario 2)"
 
 **Purpose**: Full test pass, manual validation, and builds
 
-- [ ] T027 [P] Run and extend Vitest coverage for all Scenario 2 paths in `backend/src/services/roomStore.test.ts`
-- [ ] T028 Run manual validation per `plans/002-game-start-drawer/quickstart.md` (Tests 1–8)
-- [ ] T029 Run `npm run build` in `backend/` and `frontend/`
+- [x] T027 [P] Run and extend Vitest coverage for all Scenario 2 paths in `backend/src/services/roomStore.test.ts`
+- [x] T028 Run manual validation per `plans/002-game-start-drawer/quickstart.md` (Tests 1–8)
+- [x] T029 Run `npm run build` in `backend/` and `frontend/`
 
 ---
 

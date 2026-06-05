@@ -28,6 +28,8 @@ function mapRoomStoreError(error: RoomStoreError) {
     case "NOT_HOST":
       return new HttpError(403, error.message);
     case "INSUFFICIENT_PLAYERS":
+    case "INVALID_PLAYER_NAMES":
+    case "DUPLICATE_PLAYER_NAMES":
       return new HttpError(400, error.message);
     default:
       return new HttpError(500, "Unexpected room error");

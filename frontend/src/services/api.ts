@@ -16,6 +16,9 @@ export interface RoomSnapshot {
   viewerParticipantId?: string;
   isViewerHost: boolean;
   canStartGame: boolean;
+  drawerId?: string;
+  viewerRole?: ParticipantRole;
+  wordDisplay?: string;
 }
 
 export interface RoomSessionResponse {

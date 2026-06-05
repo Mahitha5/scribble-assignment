@@ -12,7 +12,9 @@ export type RoomStoreErrorCode =
   | "DUPLICATE_NAME"
   | "GAME_IN_PROGRESS"
   | "NOT_HOST"
-  | "INSUFFICIENT_PLAYERS";
+  | "INSUFFICIENT_PLAYERS"
+  | "INVALID_PLAYER_NAMES"
+  | "DUPLICATE_PLAYER_NAMES";
 
 export class RoomStoreError extends Error {
   readonly code: RoomStoreErrorCode;
@@ -108,6 +110,64 @@ function participantsByJoinOrder(room: Room) {
 
 export function listWords() {
   return [...STARTER_WORDS];
+}
+
+export function trimDisplayName(name?: string) {
+  return (name ?? "").trim();
+}
+
+function formatOffenderNames(participants: Participant[], ids: string[]) {
+  return ids
+    .map((id) => {
+      const participant = participants.find((entry) => entry.id === id);
+      return participant?.name?.trim() ? participant.name : participant?.name ?? "(unnamed)";
+    })
+    .join(", ");
+}
+
+export function validateNamesForStart(participants: Participant[]) {
+  const emptyOffenderIds: string[] = [];
+  const trimmedById = new Map<string, string>();
+
+  for (const participant of participants) {
+    const trimmed = trimDisplayName(participant.name);
+
+    if (trimmed.length === 0) {
+      emptyOffenderIds.push(participant.id);
+      continue;
+    }
+
+    trimmedById.set(participant.id, trimmed);
+  }
+
+  const duplicateOffenderIds: string[] = [];
+  const seen = new Map<string, string[]>();
+
+  for (const [participantId, trimmed] of trimmedById.entries()) {
+    const key = trimmed.toLowerCase();
+    const existing = seen.get(key) ?? [];
+    existing.push(participantId);
+    seen.set(key, existing);
+  }
+
+  for (const ids of seen.values()) {
+    if (ids.length > 1) {
+      duplicateOffenderIds.push(...ids);
+    }
+  }
+
+  return {
+    emptyOffenderIds,
+    duplicateOffenderIds: [...new Set(duplicateOffenderIds)]
+  };
+}
+
+export function selectSecretWord(roomCode: string) {
+  const upper = roomCode.toUpperCase();
+  const sum = [...upper].reduce((total, character) => total + character.charCodeAt(0), 0);
+  const index = sum % STARTER_WORDS.length;
+
+  return STARTER_WORDS[index];
 }
 
 export function resolveHostTransfer(room: Room, referenceMs = nowMs()) {
@@ -291,6 +351,19 @@ export function toRoomSnapshot(room: Room, viewerParticipantId?: string): RoomSn
     ? room.participants.find((participant) => participant.id === viewerParticipantId)
     : undefined;
   const isViewerHost = viewer?.isHost ?? false;
+  const isPlaying = room.status === "playing";
+  const viewerRole =
+    isPlaying && room.drawerId && viewerParticipantId
+      ? viewerParticipantId === room.drawerId
+        ? "drawer"
+        : "guesser"
+      : undefined;
+  const wordDisplay =
+    isPlaying && room.secretWord
+      ? viewerRole === "drawer"
+        ? room.secretWord
+        : "Guess word"
+      : undefined;
 
   return {
     code: room.code,
@@ -305,7 +378,10 @@ export function toRoomSnapshot(room: Room, viewerParticipantId?: string): RoomSn
     roles: [...STARTER_ROLES],
     viewerParticipantId,
     isViewerHost,
-    canStartGame: isViewerHost && room.status === "lobby" && room.participants.length >= 2
+    canStartGame: isViewerHost && room.status === "lobby" && room.participants.length >= 2,
+    drawerId: isPlaying ? room.drawerId : undefined,
+    viewerRole,
+    wordDisplay
   };
 }
 
@@ -340,6 +416,28 @@ export function startGame(code: string, participantId: string) {
     throw new RoomStoreError("INSUFFICIENT_PLAYERS", "Waiting for more players");
   }
 
+  const { emptyOffenderIds, duplicateOffenderIds } = validateNamesForStart(room.participants);
+
+  if (emptyOffenderIds.length > 0) {
+    throw new RoomStoreError(
+      "INVALID_PLAYER_NAMES",
+      `Player names cannot be empty: ${formatOffenderNames(room.participants, emptyOffenderIds)}`
+    );
+  }
+
+  if (duplicateOffenderIds.length > 0) {
+    throw new RoomStoreError(
+      "DUPLICATE_PLAYER_NAMES",
+      `Display names must be unique: ${formatOffenderNames(room.participants, duplicateOffenderIds)}`
+    );
+  }
+
+  for (const entry of room.participants) {
+    entry.name = trimDisplayName(entry.name);
+  }
+
+  room.drawerId = participant.id;
+  room.secretWord = selectSecretWord(room.code);
   room.status = "playing";
   persistRoom(room);
 

@@ -6,6 +6,7 @@ import {
   getRoomSnapshot,
   joinRoom,
   RoomStoreError,
+  selectSecretWord,
   setParticipantLastSeenAt,
   startGame,
   STALE_THRESHOLD_MS
@@ -95,6 +96,84 @@ describe("roomStore", () => {
 
     expect(started.status).toBe("playing");
     expect(started.canStartGame).toBe(false);
+    expect(started.drawerId).toBe(host.participantId);
+    expect(started.viewerRole).toBe("drawer");
+    expect(started.wordDisplay).toBe(selectSecretWord(host.room.code));
+  });
+
+  it("startGame rejects empty or whitespace-only names", () => {
+    const host = createRoom("Host");
+    joinRoom(host.room.code, "   ");
+
+    expect(() => startGame(host.room.code, host.participantId)).toThrow(
+      "Player names cannot be empty:"
+    );
+  });
+
+  it("startGame rejects undefined display names", () => {
+    const host = createRoom("Host");
+    joinRoom(host.room.code);
+
+    expect(() => startGame(host.room.code, host.participantId)).toThrow(
+      "Player names cannot be empty:"
+    );
+  });
+
+  it("startGame rejects duplicate trimmed names", () => {
+    const host = createRoom("Alex");
+    joinRoom(host.room.code, "  alex  ");
+
+    expect(() => startGame(host.room.code, host.participantId)).toThrow(
+      "Display names must be unique:"
+    );
+  });
+
+  it("startGame trims names and assigns deterministic secret word", () => {
+    const host = createRoom("  Host  ");
+    const guest = joinRoom(host.room.code, " Guest ");
+
+    const started = startGame(host.room.code, host.participantId);
+
+    expect(started.participants.find((participant) => participant.id === host.participantId)?.name).toBe(
+      "Host"
+    );
+    expect(started.participants.find((participant) => participant.id === guest.participantId)?.name).toBe(
+      "Guest"
+    );
+    expect(started.wordDisplay).toBe(selectSecretWord(host.room.code));
+  });
+
+  it("guessers receive Guess word placeholder in snapshot", () => {
+    const host = createRoom("Host");
+    const guest = joinRoom(host.room.code, "Guest");
+    startGame(host.room.code, host.participantId);
+
+    const guesserView = getRoomSnapshot(host.room.code, guest.participantId);
+
+    expect(guesserView.viewerRole).toBe("guesser");
+    expect(guesserView.wordDisplay).toBe("Guess word");
+    expect(guesserView).not.toHaveProperty("secretWord");
+  });
+
+  it("selectSecretWord is deterministic for a room code", () => {
+    expect(selectSecretWord("ABCD")).toBe(selectSecretWord("abcd"));
+    expect(selectSecretWord("ABCD")).toBe(selectSecretWord("ABCD"));
+  });
+
+  it("successor host becomes drawer after transfer", () => {
+    const host = createRoom("Host");
+    const second = joinRoom(host.room.code, "Second");
+
+    const staleAt = new Date(Date.now() - STALE_THRESHOLD_MS - 1).toISOString();
+    setParticipantLastSeenAt(host.room.code, host.participantId, staleAt);
+    setParticipantLastSeenAt(host.room.code, second.participantId, new Date().toISOString());
+
+    getRoomSnapshot(host.room.code, second.participantId);
+
+    const started = startGame(host.room.code, second.participantId);
+
+    expect(started.drawerId).toBe(second.participantId);
+    expect(started.viewerRole).toBe("drawer");
   });
 
   it("transfers host to the next joiner when the current host goes stale", () => {

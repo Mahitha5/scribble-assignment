@@ -13,6 +13,8 @@ export interface Room {
   code: string;
   status: RoomStatus;
   participants: Participant[];
+  drawerId?: string;
+  secretWord?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -33,6 +35,9 @@ export interface RoomSnapshot {
   viewerParticipantId?: string;
   isViewerHost: boolean;
   canStartGame: boolean;
+  drawerId?: string;
+  viewerRole?: ParticipantRole;
+  wordDisplay?: string;
 }
 
 export interface RoomSessionResponse {
