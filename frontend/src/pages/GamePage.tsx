@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../components/Card";
+import { DrawingCanvas } from "../components/DrawingCanvas";
 import { GuessForm } from "../components/GuessForm";
 import { ResultPanel } from "../components/ResultPanel";
 import { RoomCodeBadge } from "../components/RoomCodeBadge";
@@ -50,14 +51,12 @@ export function GamePage() {
       }
     }
 
-    if (!room || room.status !== "playing") {
-      void loadInitialSnapshot();
-    }
+    void loadInitialSnapshot();
 
     return () => {
       active = false;
     };
-  }, [navigate, participantId, room, roomCode, roomStore]);
+  }, [navigate, participantId, roomCode, roomStore]);
 
   if (!participantId || !roomCode || !room) {
     return (
@@ -73,6 +72,10 @@ export function GamePage() {
     : null;
   const viewerRole = room.viewerRole ?? (room.drawerId === participantId ? "drawer" : "guesser");
   const roleLabel = viewerRole === "drawer" ? "Drawer" : "Guesser";
+  const strokes = room.strokes ?? [];
+  const guesses = room.guesses ?? [];
+  const scores = room.scores ?? [];
+  const isDrawer = viewerRole === "drawer";
 
   return (
     <section className="panel game-page">
@@ -89,8 +92,8 @@ export function GamePage() {
 
       <div className="game-page__layout">
         <aside className="game-page__sidebar game-page__sidebar--left">
-          <Scoreboard />
-          <ResultPanel />
+          <Scoreboard scores={scores} />
+          <ResultPanel guesses={guesses} />
         </aside>
 
         <div className="game-page__main">
@@ -99,11 +102,35 @@ export function GamePage() {
           </Card>
 
           <Card title="Canvas">
-            <div
-              className="canvas-placeholder"
-              style={{ minHeight: "500px", backgroundColor: "#ffffff", border: "1px solid #e5e7eb" }}
-            >
-              {drawer ? `${drawer.name ?? "Someone"} is drawing...` : "Waiting for drawer..."}
+            <div className="canvas-panel">
+              <DrawingCanvas
+                mode={isDrawer ? "draw" : "view"}
+                strokes={strokes}
+                onStrokeComplete={
+                  isDrawer
+                    ? async (stroke) => {
+                        await roomStore.appendStroke(stroke);
+                      }
+                    : undefined
+                }
+              />
+              {isDrawer ? (
+                <div className="button-row button-row--compact canvas-panel__actions">
+                  <button
+                    className="button button--secondary"
+                    type="button"
+                    onClick={() => {
+                      void roomStore.clearCanvas();
+                    }}
+                  >
+                    Clear Canvas
+                  </button>
+                </div>
+              ) : (
+                <p className="canvas-panel__hint">
+                  {drawer ? `${drawer.name ?? "Someone"} is drawing...` : "Waiting for drawer..."}
+                </p>
+              )}
             </div>
           </Card>
         </div>
@@ -127,7 +154,12 @@ export function GamePage() {
           </Card>
 
           <Card title="Your Guess">
-            <GuessForm />
+            <GuessForm
+              disabled={isDrawer}
+              onSubmit={async (text) => {
+                await roomStore.submitGuess(text);
+              }}
+            />
           </Card>
         </aside>
       </div>

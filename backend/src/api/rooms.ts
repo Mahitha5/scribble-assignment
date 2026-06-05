@@ -1,36 +1,47 @@
 import { Router } from "express";
 import type { NextFunction } from "express";
 import {
+  appendStrokeSchema,
+  clearCanvasSchema,
   createRoomSchema,
   HttpError,
   joinRoomSchema,
   roomCodeParamsSchema,
   roomViewerQuerySchema,
-  startGameSchema
+  startGameSchema,
+  submitGuessSchema
 } from "./schemas.js";
 import {
+  appendStroke,
+  clearCanvas,
   createRoom,
   getRoomSnapshot,
   joinRoom,
   RoomStoreError,
-  startGame
+  startGame,
+  submitGuess
 } from "../services/roomStore.js";
 
 function mapRoomStoreError(error: RoomStoreError) {
   switch (error.code) {
     case "INVALID_CODE":
-      return new HttpError(400, error.message);
-    case "ROOM_NOT_FOUND":
-      return new HttpError(404, error.message);
-    case "DUPLICATE_NAME":
-    case "GAME_IN_PROGRESS":
-      return new HttpError(409, error.message);
-    case "NOT_HOST":
-      return new HttpError(403, error.message);
+    case "INVALID_STROKE":
+    case "EMPTY_GUESS":
     case "INSUFFICIENT_PLAYERS":
     case "INVALID_PLAYER_NAMES":
     case "DUPLICATE_PLAYER_NAMES":
       return new HttpError(400, error.message);
+    case "ROOM_NOT_FOUND":
+      return new HttpError(404, error.message);
+    case "DUPLICATE_NAME":
+    case "NOT_PLAYING":
+      return new HttpError(409, error.message);
+    case "NOT_HOST":
+    case "NOT_DRAWER":
+    case "DRAWER_CANNOT_GUESS":
+      return new HttpError(403, error.message);
+    case "GAME_IN_PROGRESS":
+      return new HttpError(409, error.message);
     default:
       return new HttpError(500, "Unexpected room error");
   }
@@ -94,6 +105,42 @@ export function createRoomsRouter() {
       const { code } = roomCodeParamsSchema.parse(request.params);
       const { participantId } = startGameSchema.parse(request.body);
       const room = startGame(code, participantId);
+
+      response.json({ room });
+    } catch (error) {
+      handleRoomRouteError(error, next);
+    }
+  });
+
+  router.post("/:code/strokes", (request, response, next) => {
+    try {
+      const { code } = roomCodeParamsSchema.parse(request.params);
+      const { participantId, stroke } = appendStrokeSchema.parse(request.body);
+      const room = appendStroke(code, participantId, stroke);
+
+      response.json({ room });
+    } catch (error) {
+      handleRoomRouteError(error, next);
+    }
+  });
+
+  router.post("/:code/canvas/clear", (request, response, next) => {
+    try {
+      const { code } = roomCodeParamsSchema.parse(request.params);
+      const { participantId } = clearCanvasSchema.parse(request.body);
+      const room = clearCanvas(code, participantId);
+
+      response.json({ room });
+    } catch (error) {
+      handleRoomRouteError(error, next);
+    }
+  });
+
+  router.post("/:code/guesses", (request, response, next) => {
+    try {
+      const { code } = roomCodeParamsSchema.parse(request.params);
+      const { participantId, text } = submitGuessSchema.parse(request.body);
+      const room = submitGuess(code, participantId, text);
 
       response.json({ room });
     } catch (error) {

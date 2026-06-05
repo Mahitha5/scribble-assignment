@@ -1,5 +1,12 @@
 import { randomUUID } from "node:crypto";
-import type { Participant, Room, RoomSnapshot } from "../models/game.js";
+import type {
+  GuessEntry,
+  Participant,
+  Point,
+  Room,
+  RoomSnapshot,
+  StrokeSegment
+} from "../models/game.js";
 import { STARTER_ROLES, STARTER_WORDS } from "../seed/starterData.js";
 
 export const STALE_THRESHOLD_MS = 6_000;
@@ -14,7 +21,12 @@ export type RoomStoreErrorCode =
   | "NOT_HOST"
   | "INSUFFICIENT_PLAYERS"
   | "INVALID_PLAYER_NAMES"
-  | "DUPLICATE_PLAYER_NAMES";
+  | "DUPLICATE_PLAYER_NAMES"
+  | "EMPTY_GUESS"
+  | "DRAWER_CANNOT_GUESS"
+  | "NOT_DRAWER"
+  | "INVALID_STROKE"
+  | "NOT_PLAYING";
 
 export class RoomStoreError extends Error {
   readonly code: RoomStoreErrorCode;
@@ -160,6 +172,51 @@ export function validateNamesForStart(participants: Participant[]) {
     emptyOffenderIds,
     duplicateOffenderIds: [...new Set(duplicateOffenderIds)]
   };
+}
+
+export function trimGuess(text: string) {
+  return text.trim();
+}
+
+export function isCorrectGuess(guess: string, secretWord: string) {
+  return trimGuess(guess).toLowerCase() === secretWord.toLowerCase();
+}
+
+export function computeGuessPoints(room: Room, participantId: string, isCorrect: boolean) {
+  if (!isCorrect) {
+    return 0;
+  }
+
+  const priorScoringCorrect = (room.guesses ?? []).some(
+    (entry) => entry.participantId === participantId && entry.scoredPoints === 100
+  );
+
+  return priorScoringCorrect ? 0 : 100;
+}
+
+export function normalizeStrokePoints(points: Point[]) {
+  return points.map((point) => ({
+    x: Math.min(1, Math.max(0, point.x)),
+    y: Math.min(1, Math.max(0, point.y))
+  }));
+}
+
+function assertPlaying(room: Room) {
+  if (room.status !== "playing") {
+    throw new RoomStoreError("NOT_PLAYING", "Game is not in progress");
+  }
+}
+
+function assertDrawer(room: Room, participantId: string) {
+  if (room.drawerId !== participantId) {
+    throw new RoomStoreError("NOT_DRAWER", "Only the drawer can update the canvas");
+  }
+}
+
+function initializeGameplayState(room: Room) {
+  room.strokes = [];
+  room.guesses = [];
+  room.scores = Object.fromEntries(room.participants.map((participant) => [participant.id, 0]));
 }
 
 export function selectSecretWord(roomCode: string) {
@@ -381,7 +438,25 @@ export function toRoomSnapshot(room: Room, viewerParticipantId?: string): RoomSn
     canStartGame: isViewerHost && room.status === "lobby" && room.participants.length >= 2,
     drawerId: isPlaying ? room.drawerId : undefined,
     viewerRole,
-    wordDisplay
+    wordDisplay,
+    strokes: isPlaying ? [...(room.strokes ?? [])] : undefined,
+    guesses: isPlaying
+      ? (room.guesses ?? []).map((entry) => ({
+          id: entry.id,
+          playerName: entry.playerName,
+          text: entry.text,
+          isCorrect: entry.isCorrect,
+          scoredPoints: entry.scoredPoints,
+          submittedAt: entry.submittedAt
+        }))
+      : undefined,
+    scores: isPlaying
+      ? room.participants.map((participant) => ({
+          participantId: participant.id,
+          playerName: participant.name ?? "Unknown player",
+          score: room.scores?.[participant.id] ?? 0
+        }))
+      : undefined
   };
 }
 
@@ -438,7 +513,90 @@ export function startGame(code: string, participantId: string) {
 
   room.drawerId = participant.id;
   room.secretWord = selectSecretWord(room.code);
+  initializeGameplayState(room);
   room.status = "playing";
+  persistRoom(room);
+
+  return toRoomSnapshot(room, participantId);
+}
+
+export function appendStroke(
+  code: string,
+  participantId: string,
+  strokeInput: Pick<StrokeSegment, "points" | "color" | "lineWidth">
+) {
+  const room = loadPreparedRoom(code, "Unable to load room");
+  assertPlaying(room);
+  assertDrawer(room, participantId);
+
+  const points = normalizeStrokePoints(strokeInput.points);
+
+  if (points.length < 2) {
+    throw new RoomStoreError("INVALID_STROKE", "Invalid stroke");
+  }
+
+  const segment: StrokeSegment = {
+    id: randomUUID(),
+    points,
+    color: strokeInput.color,
+    lineWidth: strokeInput.lineWidth
+  };
+
+  room.strokes = [...(room.strokes ?? []), segment];
+  persistRoom(room);
+
+  return toRoomSnapshot(room, participantId);
+}
+
+export function clearCanvas(code: string, participantId: string) {
+  const room = loadPreparedRoom(code, "Unable to load room");
+  assertPlaying(room);
+  assertDrawer(room, participantId);
+
+  room.strokes = [];
+  persistRoom(room);
+
+  return toRoomSnapshot(room, participantId);
+}
+
+export function submitGuess(code: string, participantId: string, text: string) {
+  const room = loadPreparedRoom(code, "Unable to load room");
+  assertPlaying(room);
+
+  const participant = room.participants.find((entry) => entry.id === participantId);
+
+  if (!participant) {
+    throw new RoomStoreError("ROOM_NOT_FOUND", "Unable to load room");
+  }
+
+  if (room.drawerId === participantId) {
+    throw new RoomStoreError("DRAWER_CANNOT_GUESS", "The drawer cannot submit guesses");
+  }
+
+  const trimmed = trimGuess(text);
+
+  if (trimmed.length === 0) {
+    throw new RoomStoreError("EMPTY_GUESS", "Guess cannot be empty");
+  }
+
+  const secretWord = room.secretWord ?? "";
+  const correct = isCorrectGuess(trimmed, secretWord);
+  const scoredPoints = computeGuessPoints(room, participantId, correct);
+  const entry: GuessEntry = {
+    id: randomUUID(),
+    participantId,
+    playerName: participant.name ?? "Unknown player",
+    text: trimmed,
+    isCorrect: correct,
+    scoredPoints,
+    submittedAt: now()
+  };
+
+  room.guesses = [...(room.guesses ?? []), entry];
+  room.scores = {
+    ...(room.scores ?? {}),
+    [participantId]: (room.scores?.[participantId] ?? 0) + scoredPoints
+  };
   persistRoom(room);
 
   return toRoomSnapshot(room, participantId);

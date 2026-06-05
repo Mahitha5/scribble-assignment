@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  appendStroke,
   clearAllRooms,
+  clearCanvas,
   createRoom,
   evictIfAllParticipantsStale,
   getRoomSnapshot,
@@ -9,7 +11,8 @@ import {
   selectSecretWord,
   setParticipantLastSeenAt,
   startGame,
-  STALE_THRESHOLD_MS
+  STALE_THRESHOLD_MS,
+  submitGuess
 } from "./roomStore.js";
 
 describe("roomStore", () => {
@@ -99,6 +102,9 @@ describe("roomStore", () => {
     expect(started.drawerId).toBe(host.participantId);
     expect(started.viewerRole).toBe("drawer");
     expect(started.wordDisplay).toBe(selectSecretWord(host.room.code));
+    expect(started.strokes).toEqual([]);
+    expect(started.guesses).toEqual([]);
+    expect(started.scores?.every((entry) => entry.score === 0)).toBe(true);
   });
 
   it("startGame rejects empty or whitespace-only names", () => {
@@ -202,6 +208,120 @@ describe("roomStore", () => {
 
     expect(evictIfAllParticipantsStale(host.room.code)).toBe(true);
     expect(() => joinRoom(host.room.code, "Guest")).toThrow("Unable to join room");
+  });
+
+  it("appendStroke adds strokes in order for the drawer only", () => {
+    const host = createRoom("Host");
+    const guest = joinRoom(host.room.code, "Guest");
+    startGame(host.room.code, host.participantId);
+
+    const first = appendStroke(host.room.code, host.participantId, {
+      points: [
+        { x: 0.1, y: 0.1 },
+        { x: 0.2, y: 0.2 }
+      ],
+      color: "#000000",
+      lineWidth: 4
+    });
+    const second = appendStroke(host.room.code, host.participantId, {
+      points: [
+        { x: 0.3, y: 0.3 },
+        { x: 0.4, y: 0.4 }
+      ],
+      color: "#000000",
+      lineWidth: 4
+    });
+
+    expect(first.strokes).toHaveLength(1);
+    expect(second.strokes).toHaveLength(2);
+    expect(() =>
+      appendStroke(host.room.code, guest.participantId, {
+        points: [
+          { x: 0.5, y: 0.5 },
+          { x: 0.6, y: 0.6 }
+        ],
+        color: "#000000",
+        lineWidth: 4
+      })
+    ).toThrow("Only the drawer can update the canvas");
+  });
+
+  it("clearCanvas empties stroke list for the drawer", () => {
+    const host = createRoom("Host");
+    joinRoom(host.room.code, "Guest");
+    startGame(host.room.code, host.participantId);
+
+    appendStroke(host.room.code, host.participantId, {
+      points: [
+        { x: 0.1, y: 0.1 },
+        { x: 0.2, y: 0.2 }
+      ],
+      color: "#000000",
+      lineWidth: 4
+    });
+
+    const cleared = clearCanvas(host.room.code, host.participantId);
+
+    expect(cleared.strokes).toEqual([]);
+  });
+
+  it("submitGuess rejects empty guesses and drawer submissions", () => {
+    const host = createRoom("Host");
+    const guest = joinRoom(host.room.code, "Guest");
+    startGame(host.room.code, host.participantId);
+
+    expect(() => submitGuess(host.room.code, guest.participantId, "   ")).toThrow(
+      "Guess cannot be empty"
+    );
+    expect(() => submitGuess(host.room.code, host.participantId, "rocket")).toThrow(
+      "The drawer cannot submit guesses"
+    );
+  });
+
+  it("submitGuess scores first correct guess only and compares case-insensitively", () => {
+    const host = createRoom("Host");
+    const guest = joinRoom(host.room.code, "Guest");
+    const started = startGame(host.room.code, host.participantId);
+    const secretWord = started.wordDisplay ?? "";
+
+    const firstCorrect = submitGuess(host.room.code, guest.participantId, `  ${secretWord.toUpperCase()}  `);
+    const duplicateCorrect = submitGuess(host.room.code, guest.participantId, secretWord);
+    const incorrect = submitGuess(host.room.code, guest.participantId, "wrong");
+
+    expect(firstCorrect.guesses?.[0]).toMatchObject({
+      text: secretWord.toUpperCase(),
+      isCorrect: true,
+      scoredPoints: 100
+    });
+    expect(duplicateCorrect.guesses?.[1]).toMatchObject({
+      isCorrect: true,
+      scoredPoints: 0
+    });
+    expect(incorrect.guesses?.[2]).toMatchObject({
+      isCorrect: false,
+      scoredPoints: 0
+    });
+    expect(firstCorrect.scores?.find((entry) => entry.participantId === guest.participantId)?.score).toBe(
+      100
+    );
+  });
+
+  it("two guessers can each score 100 independently", () => {
+    const host = createRoom("Host");
+    const guest = joinRoom(host.room.code, "Guest");
+    const third = joinRoom(host.room.code, "Third");
+    const started = startGame(host.room.code, host.participantId);
+    const secretWord = started.wordDisplay ?? "";
+
+    submitGuess(host.room.code, guest.participantId, secretWord);
+    const thirdResult = submitGuess(host.room.code, third.participantId, secretWord);
+
+    expect(thirdResult.scores?.find((entry) => entry.participantId === guest.participantId)?.score).toBe(
+      100
+    );
+    expect(thirdResult.scores?.find((entry) => entry.participantId === third.participantId)?.score).toBe(
+      100
+    );
   });
 
   it("original host reconnects as non-host after transfer", () => {
