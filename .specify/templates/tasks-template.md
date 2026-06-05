@@ -5,9 +5,11 @@ description: "Task list template for feature implementation"
 
 # Tasks: [FEATURE NAME]
 
-**Input**: Design documents from `/specs/[###-feature-name]/`
+**Input**: Design documents from `specs/[###-feature-name]/spec.md` and `plans/[###-feature-name]/`
 
-**Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/, constitution compliance (`.specify/memory/constitution.md`)
+**Tasks directory**: `tasks/[###-feature-name]/tasks.md` (feature name MUST match the spec folder name)
+
+**Prerequisites**: `plans/[###-feature-name]/plan.md`, `specs/[###-feature-name]/spec.md`, optional plan artifacts (`research.md`, `data-model.md`, `contracts/`, `quickstart.md`), constitution (`.specify/memory/constitution.md`)
 
 **Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
 

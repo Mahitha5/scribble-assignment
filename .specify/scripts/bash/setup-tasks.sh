@@ -34,7 +34,7 @@ if ! feature_json_matches_feature_dir "$REPO_ROOT" "$FEATURE_DIR"; then
 fi
 
 if [[ ! -f "$IMPL_PLAN" ]]; then
-    echo "ERROR: plan.md not found in $FEATURE_DIR" >&2
+    echo "ERROR: plan.md not found at $IMPL_PLAN" >&2
     echo "Run /speckit.plan first to create the implementation plan." >&2
     exit 1
 fi

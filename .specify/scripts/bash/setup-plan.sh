@@ -37,8 +37,9 @@ if ! feature_json_matches_feature_dir "$REPO_ROOT" "$FEATURE_DIR"; then
     check_feature_branch "$CURRENT_BRANCH" "$HAS_GIT" || exit 1
 fi
 
-# Ensure the feature directory exists
+# Ensure the feature and plan directories exist
 mkdir -p "$FEATURE_DIR"
+mkdir -p "$PLAN_DIR"
 
 # Copy plan template if it exists
 TEMPLATE=$(resolve_template "plan-template" "$REPO_ROOT") || true

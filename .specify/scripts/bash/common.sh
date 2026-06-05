@@ -287,19 +287,26 @@ get_feature_paths() {
         return 1
     fi
 
+    local feature_name
+    feature_name="$(basename "$feature_dir")"
+    local plan_dir="$repo_root/plans/$feature_name"
+    local tasks_dir="$repo_root/tasks/$feature_name"
+
     # Use printf '%q' to safely quote values, preventing shell injection
     # via crafted branch names or paths containing special characters
     printf 'REPO_ROOT=%q\n' "$repo_root"
     printf 'CURRENT_BRANCH=%q\n' "$current_branch"
     printf 'HAS_GIT=%q\n' "$has_git_repo"
     printf 'FEATURE_DIR=%q\n' "$feature_dir"
+    printf 'PLAN_DIR=%q\n' "$plan_dir"
+    printf 'TASKS_DIR=%q\n' "$tasks_dir"
     printf 'FEATURE_SPEC=%q\n' "$feature_dir/spec.md"
-    printf 'IMPL_PLAN=%q\n' "$feature_dir/plan.md"
-    printf 'TASKS=%q\n' "$feature_dir/tasks.md"
-    printf 'RESEARCH=%q\n' "$feature_dir/research.md"
-    printf 'DATA_MODEL=%q\n' "$feature_dir/data-model.md"
-    printf 'QUICKSTART=%q\n' "$feature_dir/quickstart.md"
-    printf 'CONTRACTS_DIR=%q\n' "$feature_dir/contracts"
+    printf 'IMPL_PLAN=%q\n' "$plan_dir/plan.md"
+    printf 'TASKS=%q\n' "$tasks_dir/tasks.md"
+    printf 'RESEARCH=%q\n' "$plan_dir/research.md"
+    printf 'DATA_MODEL=%q\n' "$plan_dir/data-model.md"
+    printf 'QUICKSTART=%q\n' "$plan_dir/quickstart.md"
+    printf 'CONTRACTS_DIR=%q\n' "$plan_dir/contracts"
 }
 
 # Check if jq is available for safe JSON construction

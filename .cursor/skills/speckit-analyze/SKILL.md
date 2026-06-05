@@ -68,7 +68,7 @@ Run `.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --inclu
 
 - SPEC = FEATURE_DIR/spec.md
 - PLAN = FEATURE_DIR/plan.md
-- TASKS = FEATURE_DIR/tasks.md
+- TASKS = `tasks/[###-feature-name]/tasks.md` (from `check-prerequisites.sh --paths-only`)
 
 Abort with an error message if any required file is missing (instruct the user to run missing prerequisite command).
 For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
