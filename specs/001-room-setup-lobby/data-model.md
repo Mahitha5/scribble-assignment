@@ -1,6 +1,6 @@
 # Data Model: Room Setup & Lobby
 
-**Feature**: `plans/001-room-setup-lobby` (spec: `specs/001-room-setup-lobby/spec.md`)
+**Feature**: `specs/001-room-setup-lobby` (spec: `specs/001-room-setup-lobby/spec.md`)
 
 ## Entity Relationship
 

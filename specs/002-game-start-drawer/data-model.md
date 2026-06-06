@@ -1,7 +1,7 @@
 # Data Model: Game Start & Drawer Flow
 
-**Feature**: `plans/002-game-start-drawer` (spec: `specs/002-game-start-drawer/spec.md`)  
-**Prerequisite**: `plans/001-room-setup-lobby/data-model.md`
+**Feature**: `specs/002-game-start-drawer` (spec: `specs/002-game-start-drawer/spec.md`)  
+**Prerequisite**: `specs/001-room-setup-lobby/data-model.md`
 
 ## Entity Relationship
 

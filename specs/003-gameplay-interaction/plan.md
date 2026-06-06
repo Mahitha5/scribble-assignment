@@ -2,7 +2,7 @@
 
 **Input**: Feature specification from `specs/003-gameplay-interaction/spec.md`
 
-**Plan directory**: `plans/003-gameplay-interaction/`
+**Feature directory**: `specs/003-gameplay-interaction/`
 
 ## Summary
 
@@ -46,7 +46,7 @@ Technical approach: add `strokes`, `guesses`, and `scores` to in-memory `Room`; 
 
 ### API Contracts
 
-See `plans/003-gameplay-interaction/contracts/rooms-api.md` for new endpoints and extended snapshot fields.
+See `specs/003-gameplay-interaction/contracts/rooms-api.md` for new endpoints and extended snapshot fields.
 
 | Method | Path | Purpose |
 |--------|------|---------|
@@ -113,8 +113,8 @@ No new npm packages. Builds on 001 lobby and 002 game-start (`drawerId`, `secret
 
 ## Related Artifacts
 
-- `plans/003-gameplay-interaction/research.md` — design decisions
-- `plans/003-gameplay-interaction/data-model.md` — entity extensions
-- `plans/003-gameplay-interaction/contracts/rooms-api.md` — REST contract delta
-- `plans/003-gameplay-interaction/quickstart.md` — manual test script
-- `plans/002-game-start-drawer/` — prerequisite drawer/word/polling
+- `specs/003-gameplay-interaction/research.md` — design decisions
+- `specs/003-gameplay-interaction/data-model.md` — entity extensions
+- `specs/003-gameplay-interaction/contracts/rooms-api.md` — REST contract delta
+- `specs/003-gameplay-interaction/quickstart.md` — manual test script
+- `specs/002-game-start-drawer/` — prerequisite drawer/word/polling

@@ -1,6 +1,6 @@
 # Feature Specification: Game Start & Drawer Flow
 
-**Plan directory**: `plans/002-game-start-drawer/`
+**Feature directory**: `specs/002-game-start-drawer/`
 
 ## Feature description
 

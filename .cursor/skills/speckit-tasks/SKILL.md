@@ -52,11 +52,11 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 ## Outline
 
-1. **Setup**: Run `.specify/scripts/bash/setup-tasks.sh --json` and `.specify/scripts/bash/check-prerequisites.sh --json --paths-only` from repo root. Parse `FEATURE_DIR`, `TASKS`, `IMPL_PLAN`, `FEATURE_SPEC`, `TASKS_TEMPLATE`, and `AVAILABLE_DOCS`. Write output to `TASKS` (`tasks/[###-feature-name]/tasks.md`). Spec lives in `specs/`; plan artifacts in `plans/`.
+1. **Setup**: Run `.specify/scripts/bash/setup-tasks.sh --json` and `.specify/scripts/bash/check-prerequisites.sh --json --paths-only` from repo root. Parse `FEATURE_DIR`, `TASKS`, `IMPL_PLAN`, `FEATURE_SPEC`, `TASKS_TEMPLATE`, and `AVAILABLE_DOCS`. Write output to `TASKS` (`specs/[###-feature-name]/tasks.md`). All feature artifacts live under `specs/[###-feature-name]/`.
 
 2. **Load design documents**:
-   - **Required**: `plans/[###-feature-name]/plan.md`, `specs/[###-feature-name]/spec.md`
-   - **Optional**: `plans/[###-feature-name]/research.md`, `data-model.md`, `contracts/`, `quickstart.md`
+   - **Required**: `specs/[###-feature-name]/plan.md`, `specs/[###-feature-name]/spec.md`
+   - **Optional**: `specs/[###-feature-name]/research.md`, `data-model.md`, `contracts/`, `quickstart.md`
    - Note: Not all projects have all documents. Generate tasks based on what's available.
 
 3. **Execute task generation workflow**:
@@ -70,7 +70,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Create parallel execution examples per user story
    - Validate task completeness (each user story has all needed tasks, independently testable)
 
-4. **Generate tasks.md**: Create `tasks/[###-feature-name]/` if needed. Write to the `TASKS` path from prerequisites. Read the tasks template from `TASKS_TEMPLATE` and use it as structure. If `TASKS_TEMPLATE` is empty, fall back to `.specify/templates/tasks-template.md`. Fill with:
+4. **Generate tasks.md**: Write to the `TASKS` path from prerequisites (`specs/[###-feature-name]/tasks.md`). Read the tasks template from `TASKS_TEMPLATE` and use it as structure. If `TASKS_TEMPLATE` is empty, fall back to `.specify/templates/tasks-template.md`. Fill with:
    - Correct feature name from plan.md
    - Phase 1: Setup tasks (project initialization)
    - Phase 2: Foundational tasks (blocking prerequisites for all user stories)

@@ -1,8 +1,8 @@
 # Research: Round End, Result & Restart
 
-**Feature**: `plans/004-round-end-restart` (spec: `specs/004-round-end-restart/spec.md`)  
+**Feature**: `specs/004-round-end-restart` (spec: `specs/004-round-end-restart/spec.md`)  
 **Date**: 2026-06-06  
-**Builds on**: `plans/003-gameplay-interaction`
+**Builds on**: `specs/003-gameplay-interaction`
 
 ## 1. Room status value
 

@@ -2,7 +2,7 @@
 
 **Input**: Feature specification from `specs/002-game-start-drawer/spec.md`
 
-**Plan directory**: `plans/002-game-start-drawer/`
+**Feature directory**: `specs/002-game-start-drawer/`
 
 ## Summary
 
@@ -44,7 +44,7 @@ Technical approach: add `drawerId` and `secretWord` to in-memory `Room`; enhance
 
 ### API Contracts
 
-See `plans/002-game-start-drawer/contracts/rooms-api.md` for extended request/response shapes and new start errors.
+See `specs/002-game-start-drawer/contracts/rooms-api.md` for extended request/response shapes and new start errors.
 
 Changed behavior:
 
@@ -108,8 +108,8 @@ No new npm packages. Builds on 001 room/lobby implementation (`002-game-start-dr
 
 ## Related Artifacts
 
-- `plans/002-game-start-drawer/research.md` — design decisions
-- `plans/002-game-start-drawer/data-model.md` — entity extensions
-- `plans/002-game-start-drawer/contracts/rooms-api.md` — REST contract delta
-- `plans/002-game-start-drawer/quickstart.md` — manual test script
-- `plans/001-room-setup-lobby/` — prerequisite lobby behavior
+- `specs/002-game-start-drawer/research.md` — design decisions
+- `specs/002-game-start-drawer/data-model.md` — entity extensions
+- `specs/002-game-start-drawer/contracts/rooms-api.md` — REST contract delta
+- `specs/002-game-start-drawer/quickstart.md` — manual test script
+- `specs/001-room-setup-lobby/` — prerequisite lobby behavior

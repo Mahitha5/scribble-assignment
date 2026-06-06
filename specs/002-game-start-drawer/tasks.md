@@ -4,9 +4,9 @@ description: "Task list for Game Start & Drawer Flow (Scenario 2)"
 
 # Tasks: Game Start & Drawer Flow
 
-**Input**: Design documents from `specs/002-game-start-drawer/spec.md` and `plans/002-game-start-drawer/`
+**Input**: Design documents from `specs/002-game-start-drawer/spec.md` and `specs/002-game-start-drawer/`
 
-**Prerequisites**: Scenario 1 (`tasks/001-room-setup-lobby/tasks.md`) complete; `plans/002-game-start-drawer/plan.md`, `specs/002-game-start-drawer/spec.md`, `plans/002-game-start-drawer/research.md`, `plans/002-game-start-drawer/data-model.md`, `plans/002-game-start-drawer/contracts/rooms-api.md`, `.specify/memory/constitution.md`
+**Prerequisites**: Scenario 1 (`specs/001-room-setup-lobby/tasks.md`) complete; `specs/002-game-start-drawer/plan.md`, `specs/002-game-start-drawer/spec.md`, `specs/002-game-start-drawer/research.md`, `specs/002-game-start-drawer/data-model.md`, `specs/002-game-start-drawer/contracts/rooms-api.md`, `.specify/memory/constitution.md`
 
 **Tests**: Backend Vitest tasks included where `plan.md` lists `roomStore.test.ts` coverage; no full TDD suite unless added later.
 
@@ -21,8 +21,7 @@ description: "Task list for Game Start & Drawer Flow (Scenario 2)"
 
 - Backend: `backend/src/`
 - Frontend: `frontend/src/`
-- Plan artifacts: `plans/002-game-start-drawer/`
-- Tasks file: `tasks/002-game-start-drawer/tasks.md`
+- Feature directory: `specs/002-game-start-drawer/`
 
 ---
 
@@ -30,8 +29,8 @@ description: "Task list for Game Start & Drawer Flow (Scenario 2)"
 
 **Purpose**: Confirm Scenario 1 baseline and review Scenario 2 contract delta
 
-- [x] T001 Verify Scenario 1 lobby/start baseline (create, join, poll, start navigates to `/game`) per `plans/002-game-start-drawer/quickstart.md` prerequisites
-- [x] T002 [P] Review `plans/002-game-start-drawer/contracts/rooms-api.md` delta against current `backend/src/api/rooms.ts` and `backend/src/services/roomStore.ts`
+- [x] T001 Verify Scenario 1 lobby/start baseline (create, join, poll, start navigates to `/game`) per `specs/002-game-start-drawer/quickstart.md` prerequisites
+- [x] T002 [P] Review `specs/002-game-start-drawer/contracts/rooms-api.md` delta against current `backend/src/api/rooms.ts` and `backend/src/services/roomStore.ts`
 
 ---
 
@@ -47,7 +46,7 @@ description: "Task list for Game Start & Drawer Flow (Scenario 2)"
 - [x] T006 [P] Implement `trimDisplayName` and `validateNamesForStart` (returns offender lobby names) in `backend/src/services/roomStore.ts`
 - [x] T007 [P] Extend `RoomSnapshot` with `drawerId`, `viewerRole`, and `wordDisplay` in `frontend/src/services/api.ts`
 
-**Checkpoint**: Types compile; helpers unit-testable; contract fields defined in `plans/002-game-start-drawer/data-model.md`
+**Checkpoint**: Types compile; helpers unit-testable; contract fields defined in `specs/002-game-start-drawer/data-model.md`
 
 ---
 
@@ -119,7 +118,7 @@ description: "Task list for Game Start & Drawer Flow (Scenario 2)"
 **Purpose**: Full test pass, manual validation, and builds
 
 - [x] T027 [P] Run and extend Vitest coverage for all Scenario 2 paths in `backend/src/services/roomStore.test.ts`
-- [x] T028 Run manual validation per `plans/002-game-start-drawer/quickstart.md` (Tests 1–8)
+- [x] T028 Run manual validation per `specs/002-game-start-drawer/quickstart.md` (Tests 1–8)
 - [x] T029 Run `npm run build` in `backend/` and `frontend/`
 
 ---
@@ -217,4 +216,4 @@ T022 frontend/src/hooks/useGamePolling.ts
 - Join-time duplicate check uses raw names (001); start-time uses trimmed names (002 backstop)
 - No host kick/remove for invalid names; block start only (clarification session 2026-06-05)
 - Guesser API responses must never include raw `secretWord` — only `wordDisplay`
-- Plan artifacts in `plans/002-game-start-drawer/`; spec in `specs/002-game-start-drawer/`; tasks in `tasks/002-game-start-drawer/`
+"- All artifacts in `specs/002-game-start-drawer/`"

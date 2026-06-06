@@ -4,9 +4,9 @@ description: "Task list for Room Setup & Lobby (Scenario 1)"
 
 # Tasks: Room Setup & Lobby
 
-**Input**: Design documents from `specs/001-room-setup-lobby/spec.md` and `plans/001-room-setup-lobby/`
+**Input**: Design documents from `specs/001-room-setup-lobby/spec.md` and `specs/001-room-setup-lobby/`
 
-**Prerequisites**: `plans/001-room-setup-lobby/plan.md`, `specs/001-room-setup-lobby/spec.md`, `plans/001-room-setup-lobby/research.md`, `plans/001-room-setup-lobby/data-model.md`, `plans/001-room-setup-lobby/contracts/rooms-api.md`, `.specify/memory/constitution.md`
+**Prerequisites**: `specs/001-room-setup-lobby/plan.md`, `specs/001-room-setup-lobby/spec.md`, `specs/001-room-setup-lobby/research.md`, `specs/001-room-setup-lobby/data-model.md`, `specs/001-room-setup-lobby/contracts/rooms-api.md`, `.specify/memory/constitution.md`
 
 **Tests**: Backend Vitest tasks included where `plan.md` lists `roomStore.test.ts` coverage; no full TDD suite unless added later.
 
@@ -21,8 +21,7 @@ description: "Task list for Room Setup & Lobby (Scenario 1)"
 
 - Backend: `backend/src/`
 - Frontend: `frontend/src/`
-- Plan artifacts: `plans/001-room-setup-lobby/`
-- Tasks file: `tasks/001-room-setup-lobby/tasks.md`
+- Feature directory: `specs/001-room-setup-lobby/`
 
 ---
 
@@ -31,7 +30,7 @@ description: "Task list for Room Setup & Lobby (Scenario 1)"
 **Purpose**: Fix starter blockers and confirm dev environment
 
 - [x] T001 Fix default API base URL (`/bug` → `http://localhost:3001`) in `frontend/src/services/api.ts`
-- [x] T002 [P] Verify `npm run dev` works in `backend/` and `frontend/` against `plans/001-room-setup-lobby/quickstart.md` prerequisites
+- [x] T002 [P] Verify `npm run dev` works in `backend/` and `frontend/` against `specs/001-room-setup-lobby/quickstart.md` prerequisites
 
 ---
 
@@ -48,7 +47,7 @@ description: "Task list for Room Setup & Lobby (Scenario 1)"
 - [x] T007 [P] Mirror `RoomSnapshot`, `Participant`, and `"playing"` status types in `frontend/src/services/api.ts`
 - [x] T008 [P] Add `scribble.session` localStorage read/write helpers in `frontend/src/state/roomStore.ts`
 
-**Checkpoint**: Types compile; snapshot contract matches `plans/001-room-setup-lobby/contracts/rooms-api.md`
+**Checkpoint**: Types compile; snapshot contract matches `specs/001-room-setup-lobby/contracts/rooms-api.md`
 
 ---
 
@@ -141,7 +140,7 @@ description: "Task list for Room Setup & Lobby (Scenario 1)"
 - [x] T040 [US5] Audit all `roomStore` reads/writes to ensure Map operations are scoped by normalized code only in `backend/src/services/roomStore.ts`
 - [x] T041 [US5] Confirm lobby poll and join always use session `roomCode` (never cross-room) in `frontend/src/state/roomStore.ts` and `frontend/src/pages/LobbyPage.tsx`
 
-**Checkpoint**: US5 scenarios 1–3 pass via `plans/001-room-setup-lobby/quickstart.md` Test 6
+**Checkpoint**: US5 scenarios 1–3 pass via `specs/001-room-setup-lobby/quickstart.md` Test 6
 
 ---
 
@@ -150,7 +149,7 @@ description: "Task list for Room Setup & Lobby (Scenario 1)"
 **Purpose**: Tests, builds, and full quickstart validation
 
 - [x] T042 [P] Extend Vitest coverage for create/join/start/host-transfer/eviction/host-reconnect in `backend/src/services/roomStore.test.ts`
-- [x] T043 Run full manual validation per `plans/001-room-setup-lobby/quickstart.md` (Tests 1–9)
+- [x] T043 Run full manual validation per `specs/001-room-setup-lobby/quickstart.md` (Tests 1–9)
 - [x] T044 Run `npm run build` in `backend/` and `frontend/`
 
 ---
@@ -249,4 +248,4 @@ T035 frontend/src/services/api.ts
 - Inactive room eviction: when all participants exceed 6s stale, room is removed; poll/join 404 triggers session clear (constitution memory discipline)
 - Display names stored exactly as submitted (whitespace preserved; omitted stays undefined); duplicates rejected by exact or case-insensitive match
 - Do not add WebSockets, database, auth, or new state libraries (constitution)
-- Plan artifacts live in `plans/001-room-setup-lobby/`; spec in `specs/001-room-setup-lobby/`; tasks in `tasks/001-room-setup-lobby/`
+"- All artifacts in `specs/001-room-setup-lobby/`"

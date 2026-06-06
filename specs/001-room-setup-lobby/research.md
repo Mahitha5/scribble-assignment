@@ -1,6 +1,6 @@
 # Research: Room Setup & Lobby
 
-**Feature**: `plans/001-room-setup-lobby` (spec: `specs/001-room-setup-lobby/spec.md`)  
+**Feature**: `specs/001-room-setup-lobby` (spec: `specs/001-room-setup-lobby/spec.md`)  
 **Date**: 2026-06-05
 
 ## 1. Host disconnect detection

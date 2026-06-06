@@ -2,7 +2,7 @@
 
 **Input**: Feature specification from `specs/004-round-end-restart/spec.md`
 
-**Plan directory**: `plans/004-round-end-restart/`
+**Feature directory**: `specs/004-round-end-restart/`
 
 ## Summary
 
@@ -46,7 +46,7 @@ Technical approach: add `result` to `RoomStatus`; implement `endRound` and `rest
 
 ### API Contracts
 
-See `plans/004-round-end-restart/contracts/rooms-api.md`.
+See `specs/004-round-end-restart/contracts/rooms-api.md`.
 
 | Method | Path | Purpose |
 |--------|------|---------|
@@ -110,8 +110,8 @@ No new npm packages. Builds on Scenarios 1–3 (`roomStore`, `GamePage`, `useGam
 
 ## Related Artifacts
 
-- `plans/004-round-end-restart/research.md` — design decisions
-- `plans/004-round-end-restart/data-model.md` — entity extensions
-- `plans/004-round-end-restart/contracts/rooms-api.md` — REST contract delta
-- `plans/004-round-end-restart/quickstart.md` — manual test script
-- `plans/003-gameplay-interaction/` — prerequisite gameplay fields
+- `specs/004-round-end-restart/research.md` — design decisions
+- `specs/004-round-end-restart/data-model.md` — entity extensions
+- `specs/004-round-end-restart/contracts/rooms-api.md` — REST contract delta
+- `specs/004-round-end-restart/quickstart.md` — manual test script
+- `specs/003-gameplay-interaction/` — prerequisite gameplay fields

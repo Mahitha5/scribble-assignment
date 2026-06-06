@@ -1,8 +1,8 @@
 # Research: Gameplay Interaction
 
-**Feature**: `plans/003-gameplay-interaction` (spec: `specs/003-gameplay-interaction/spec.md`)  
+**Feature**: `specs/003-gameplay-interaction` (spec: `specs/003-gameplay-interaction/spec.md`)  
 **Date**: 2026-06-05  
-**Builds on**: `plans/002-game-start-drawer`
+**Builds on**: `specs/002-game-start-drawer`
 
 ## 1. Canvas sync model
 

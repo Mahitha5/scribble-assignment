@@ -289,8 +289,8 @@ get_feature_paths() {
 
     local feature_name
     feature_name="$(basename "$feature_dir")"
-    local plan_dir="$repo_root/plans/$feature_name"
-    local tasks_dir="$repo_root/tasks/$feature_name"
+    local plan_dir="$feature_dir"
+    local tasks_dir="$feature_dir"
 
     # Use printf '%q' to safely quote values, preventing shell injection
     # via crafted branch names or paths containing special characters

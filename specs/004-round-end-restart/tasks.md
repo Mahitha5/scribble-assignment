@@ -4,9 +4,9 @@ description: "Task list for Round End, Result & Restart (Scenario 4)"
 
 # Tasks: Round End, Result & Restart
 
-**Input**: Design documents from `specs/004-round-end-restart/spec.md` and `plans/004-round-end-restart/`
+**Input**: Design documents from `specs/004-round-end-restart/spec.md` and `specs/004-round-end-restart/`
 
-**Prerequisites**: Scenarios 1–3 complete (`tasks/001-room-setup-lobby/tasks.md`, `tasks/002-game-start-drawer/tasks.md`, `tasks/003-gameplay-interaction/tasks.md`); `plans/004-round-end-restart/plan.md`, `specs/004-round-end-restart/spec.md`, `plans/004-round-end-restart/research.md`, `plans/004-round-end-restart/data-model.md`, `plans/004-round-end-restart/contracts/rooms-api.md`, `.specify/memory/constitution.md`
+**Prerequisites**: Scenarios 1–3 complete (`specs/001-room-setup-lobby/tasks.md`, `specs/002-game-start-drawer/tasks.md`, `specs/003-gameplay-interaction/tasks.md`); `specs/004-round-end-restart/plan.md`, `specs/004-round-end-restart/spec.md`, `specs/004-round-end-restart/research.md`, `specs/004-round-end-restart/data-model.md`, `specs/004-round-end-restart/contracts/rooms-api.md`, `.specify/memory/constitution.md`
 
 **Tests**: Backend Vitest tasks included where `plan.md` lists `roomStore.test.ts` coverage; no full TDD suite unless added later.
 
@@ -21,8 +21,7 @@ description: "Task list for Round End, Result & Restart (Scenario 4)"
 
 - Backend: `backend/src/`
 - Frontend: `frontend/src/`
-- Plan artifacts: `plans/004-round-end-restart/`
-- Tasks file: `tasks/004-round-end-restart/tasks.md`
+- Feature directory: `specs/004-round-end-restart/`
 
 ---
 
@@ -30,8 +29,8 @@ description: "Task list for Round End, Result & Restart (Scenario 4)"
 
 **Purpose**: Confirm Scenario 3 baseline and review Scenario 4 contract delta
 
-- [x] T001 Verify Scenario 3 gameplay baseline (draw, guess, scoreboard, history) per `plans/004-round-end-restart/quickstart.md` prerequisites
-- [x] T002 [P] Review `plans/004-round-end-restart/contracts/rooms-api.md` delta against current `backend/src/api/rooms.ts` and `backend/src/services/roomStore.ts`
+- [x] T001 Verify Scenario 3 gameplay baseline (draw, guess, scoreboard, history) per `specs/004-round-end-restart/quickstart.md` prerequisites
+- [x] T002 [P] Review `specs/004-round-end-restart/contracts/rooms-api.md` delta against current `backend/src/api/rooms.ts` and `backend/src/services/roomStore.ts`
 
 ---
 
@@ -48,7 +47,7 @@ description: "Task list for Round End, Result & Restart (Scenario 4)"
 - [x] T007 [P] Extend `RoomSnapshot.status` union with `"result"` in `frontend/src/services/api.ts`
 - [x] T008 Extend `resolveHostTransfer` to run when `status === "result"` (same join-order rules as lobby) in `backend/src/services/roomStore.ts`
 
-**Checkpoint**: Types compile; `result` status recognized; helpers ready per `plans/004-round-end-restart/data-model.md`
+**Checkpoint**: Types compile; `result` status recognized; helpers ready per `specs/004-round-end-restart/data-model.md`
 
 ---
 
@@ -124,7 +123,7 @@ description: "Task list for Round End, Result & Restart (Scenario 4)"
 **Purpose**: Full test pass, manual validation, and builds
 
 - [x] T032 [P] Run and extend Vitest coverage for all Scenario 4 paths, including host transfer while `status === "result"` (stale host → new host can restart), in `backend/src/services/roomStore.test.ts`
-- [x] T033 Run manual validation per `plans/004-round-end-restart/quickstart.md` (Tests 1–8)
+- [x] T033 Run manual validation per `specs/004-round-end-restart/quickstart.md` (Tests 1–8)
 - [x] T034 Run `npm run build` in `backend/` and `frontend/`
 
 ---
@@ -233,4 +232,4 @@ T029 frontend/src/hooks/useLobbyPolling.ts
 - Host controls: **End Round** during `playing`, **Restart** during `result` — game page button row only
 - `assertPlaying` already blocks strokes/guesses/clear in `result`; US2 adds UI disable + Vitest confirmation
 - `joinRoom` and `startGame` existing non-lobby guards cover `result` without change
-- Plan artifacts in `plans/004-round-end-restart/`; spec in `specs/004-round-end-restart/`; tasks in `tasks/004-round-end-restart/`
+"- All artifacts in `specs/004-round-end-restart/`"

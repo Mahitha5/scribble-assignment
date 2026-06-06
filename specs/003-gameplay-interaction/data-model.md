@@ -1,7 +1,7 @@
 # Data Model: Gameplay Interaction
 
-**Feature**: `plans/003-gameplay-interaction` (spec: `specs/003-gameplay-interaction/spec.md`)  
-**Prerequisite**: `plans/002-game-start-drawer/data-model.md`
+**Feature**: `specs/003-gameplay-interaction` (spec: `specs/003-gameplay-interaction/spec.md`)  
+**Prerequisite**: `specs/002-game-start-drawer/data-model.md`
 
 ## Entity Relationship
 

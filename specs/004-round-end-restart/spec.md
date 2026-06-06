@@ -1,6 +1,6 @@
 # Feature Specification: Round End, Result & Restart
 
-**Plan directory**: `plans/004-round-end-restart/`
+**Feature directory**: `specs/004-round-end-restart/`
 
 ## Feature description
 

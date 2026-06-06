@@ -1,6 +1,6 @@
 # Feature Specification: Room Setup & Lobby
 
-**Plan directory**: `plans/001-room-setup-lobby/`
+**Feature directory**: `specs/001-room-setup-lobby/`
 
 ## Feature description
 

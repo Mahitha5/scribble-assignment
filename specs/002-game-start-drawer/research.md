@@ -1,8 +1,8 @@
 # Research: Game Start & Drawer Flow
 
-**Feature**: `plans/002-game-start-drawer` (spec: `specs/002-game-start-drawer/spec.md`)  
+**Feature**: `specs/002-game-start-drawer` (spec: `specs/002-game-start-drawer/spec.md`)  
 **Date**: 2026-06-05  
-**Builds on**: `plans/001-room-setup-lobby`
+**Builds on**: `specs/001-room-setup-lobby`
 
 ## 1. Name validation timing and trimming
 

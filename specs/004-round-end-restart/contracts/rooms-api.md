@@ -2,7 +2,7 @@
 
 **Base URL**: `http://localhost:3001`  
 **Content-Type**: `application/json`  
-**Prerequisite**: `plans/003-gameplay-interaction/contracts/rooms-api.md`
+**Prerequisite**: `specs/003-gameplay-interaction/contracts/rooms-api.md`
 
 This document describes **changes** for Round End, Result & Restart. Endpoints not listed here behave as in Scenarios 1–3.
 

@@ -2,7 +2,7 @@
 
 **Base URL**: `http://localhost:3001`  
 **Content-Type**: `application/json`  
-**Prerequisite**: `plans/002-game-start-drawer/contracts/rooms-api.md`
+**Prerequisite**: `specs/002-game-start-drawer/contracts/rooms-api.md`
 
 This document describes **changes** for Gameplay Interaction. Endpoints not listed here behave as in Scenarios 1–2.
 

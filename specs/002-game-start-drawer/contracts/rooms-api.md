@@ -2,7 +2,7 @@
 
 **Base URL**: `http://localhost:3001`  
 **Content-Type**: `application/json`  
-**Prerequisite**: `plans/001-room-setup-lobby/contracts/rooms-api.md`
+**Prerequisite**: `specs/001-room-setup-lobby/contracts/rooms-api.md`
 
 This document describes **changes** for Game Start & Drawer Flow. Endpoints not listed here behave as in Scenario 1.
 

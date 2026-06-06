@@ -2,7 +2,7 @@
 
 **Input**: Feature specification from `specs/001-room-setup-lobby/spec.md`
 
-**Plan directory**: `plans/001-room-setup-lobby/`
+**Feature directory**: `specs/001-room-setup-lobby/`
 
 ## Summary
 
@@ -44,7 +44,7 @@ Technical approach: extend in-memory `roomStore` with `isHost`, `lastSeenAt`, an
 
 ### API Contracts
 
-See `plans/001-room-setup-lobby/contracts/rooms-api.md` for request/response shapes and error codes.
+See `specs/001-room-setup-lobby/contracts/rooms-api.md` for request/response shapes and error codes.
 
 New/changed endpoints:
 
@@ -106,7 +106,7 @@ No new npm packages. Uses existing Express, Zod, React, React Router, Vite.
 
 ## Related Artifacts
 
-- `plans/001-room-setup-lobby/research.md` — design decisions
-- `plans/001-room-setup-lobby/data-model.md` — entity definitions
-- `plans/001-room-setup-lobby/contracts/rooms-api.md` — REST contracts
-- `plans/001-room-setup-lobby/quickstart.md` — manual test script
+- `specs/001-room-setup-lobby/research.md` — design decisions
+- `specs/001-room-setup-lobby/data-model.md` — entity definitions
+- `specs/001-room-setup-lobby/contracts/rooms-api.md` — REST contracts
+- `specs/001-room-setup-lobby/quickstart.md` — manual test script

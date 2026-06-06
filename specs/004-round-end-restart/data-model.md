@@ -1,7 +1,7 @@
 # Data Model: Round End, Result & Restart
 
-**Feature**: `plans/004-round-end-restart` (spec: `specs/004-round-end-restart/spec.md`)  
-**Prerequisite**: `plans/003-gameplay-interaction/data-model.md`
+**Feature**: `specs/004-round-end-restart` (spec: `specs/004-round-end-restart/spec.md`)  
+**Prerequisite**: `specs/003-gameplay-interaction/data-model.md`
 
 ## Entity Relationship
 

@@ -1,6 +1,6 @@
 # Feature Specification: Gameplay Interaction
 
-**Plan directory**: `plans/003-gameplay-interaction/`
+**Feature directory**: `specs/003-gameplay-interaction/`
 
 ## Feature description
 

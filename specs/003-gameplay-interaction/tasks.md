@@ -4,9 +4,9 @@ description: "Task list for Gameplay Interaction (Scenario 3)"
 
 # Tasks: Gameplay Interaction
 
-**Input**: Design documents from `specs/003-gameplay-interaction/spec.md` and `plans/003-gameplay-interaction/`
+**Input**: Design documents from `specs/003-gameplay-interaction/spec.md` and `specs/003-gameplay-interaction/`
 
-**Prerequisites**: Scenarios 1–2 (`tasks/001-room-setup-lobby/tasks.md`, `tasks/002-game-start-drawer/tasks.md`) complete; `plans/003-gameplay-interaction/plan.md`, `specs/003-gameplay-interaction/spec.md`, `plans/003-gameplay-interaction/research.md`, `plans/003-gameplay-interaction/data-model.md`, `plans/003-gameplay-interaction/contracts/rooms-api.md`, `.specify/memory/constitution.md`
+**Prerequisites**: Scenarios 1–2 (`specs/001-room-setup-lobby/tasks.md`, `specs/002-game-start-drawer/tasks.md`) complete; `specs/003-gameplay-interaction/plan.md`, `specs/003-gameplay-interaction/spec.md`, `specs/003-gameplay-interaction/research.md`, `specs/003-gameplay-interaction/data-model.md`, `specs/003-gameplay-interaction/contracts/rooms-api.md`, `.specify/memory/constitution.md`
 
 **Tests**: Backend Vitest tasks included where `plan.md` lists `roomStore.test.ts` coverage; no full TDD suite unless added later.
 
@@ -23,8 +23,7 @@ description: "Task list for Gameplay Interaction (Scenario 3)"
 
 - Backend: `backend/src/`
 - Frontend: `frontend/src/`
-- Plan artifacts: `plans/003-gameplay-interaction/`
-- Tasks file: `tasks/003-gameplay-interaction/tasks.md`
+- Feature directory: `specs/003-gameplay-interaction/`
 
 ---
 
@@ -32,8 +31,8 @@ description: "Task list for Gameplay Interaction (Scenario 3)"
 
 **Purpose**: Confirm Scenario 2 baseline and review Scenario 3 contract delta
 
-- [x] T001 Verify Scenario 2 game-start baseline (drawer, wordDisplay, game poll) per `plans/003-gameplay-interaction/quickstart.md` prerequisites
-- [x] T002 [P] Review `plans/003-gameplay-interaction/contracts/rooms-api.md` delta against current `backend/src/api/rooms.ts` and `backend/src/services/roomStore.ts`
+- [x] T001 Verify Scenario 2 game-start baseline (drawer, wordDisplay, game poll) per `specs/003-gameplay-interaction/quickstart.md` prerequisites
+- [x] T002 [P] Review `specs/003-gameplay-interaction/contracts/rooms-api.md` delta against current `backend/src/api/rooms.ts` and `backend/src/services/roomStore.ts`
 
 ---
 
@@ -50,7 +49,7 @@ description: "Task list for Gameplay Interaction (Scenario 3)"
 - [x] T007 Initialize `strokes: []`, `guesses: []`, and `scores` (0 per participant) inside successful `startGame` in `backend/src/services/roomStore.ts`
 - [x] T008 [P] Extend `RoomSnapshot` with `strokes`, `guesses`, and `scores` types in `frontend/src/services/api.ts`
 
-**Checkpoint**: Types compile; gameplay fields initialized at round start; helpers unit-testable per `plans/003-gameplay-interaction/data-model.md`
+**Checkpoint**: Types compile; gameplay fields initialized at round start; helpers unit-testable per `specs/003-gameplay-interaction/data-model.md`
 
 ---
 
@@ -128,7 +127,7 @@ description: "Task list for Gameplay Interaction (Scenario 3)"
 **Purpose**: Full test pass, manual validation, and builds
 
 - [x] T034 [P] Run and extend Vitest coverage for all Scenario 3 paths in `backend/src/services/roomStore.test.ts`
-- [ ] T035 Run manual validation per `plans/003-gameplay-interaction/quickstart.md` (Tests 1–11)
+- [ ] T035 Run manual validation per `specs/003-gameplay-interaction/quickstart.md` (Tests 1–11)
 - [x] T036 Run `npm run build` in `backend/` and `frontend/`
 
 ---
@@ -238,4 +237,4 @@ T029 backend/src/services/roomStore.test.ts
 - Guesser API responses must never include raw `secretWord`
 - `ResultPanel` is the canonical guess-history UI (not a separate `GuessHistory` component)
 - Round end, result screen, and restart are Scenario 4 — out of scope here
-- Plan artifacts in `plans/003-gameplay-interaction/`; spec in `specs/003-gameplay-interaction/`; tasks in `tasks/003-gameplay-interaction/`
+"- All artifacts in `specs/003-gameplay-interaction/`"
