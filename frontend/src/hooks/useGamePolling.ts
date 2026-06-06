@@ -26,7 +26,15 @@ export function useGamePolling() {
       try {
         setIsRefreshing(true);
         setPollError(null);
-        await roomStore.fetchRoom({ silent: true });
+        const snapshot = await roomStore.fetchRoom({ silent: true });
+
+        if (!active) {
+          return;
+        }
+
+        if (snapshot?.status === "lobby") {
+          navigate("/lobby", { replace: true });
+        }
       } catch (error) {
         if (!active) {
           return;

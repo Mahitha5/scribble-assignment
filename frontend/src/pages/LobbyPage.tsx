@@ -103,9 +103,18 @@ export function LobbyPage() {
     refreshError ??
     startError ??
     error ??
-    (room.isViewerHost && !room.canStartGame
-      ? "Waiting for more players before you can start."
-      : "Waiting for the host to start the game.");
+    (room.status === "result"
+      ? "Round ended — waiting for host to restart"
+      : room.isViewerHost && !room.canStartGame
+        ? "Waiting for more players before you can start."
+        : "Waiting for the host to start the game.");
+
+  const statusHeadline =
+    isLoading || isRefreshing
+      ? "Refreshing players..."
+      : room.status === "result"
+        ? "Round ended"
+        : "Ready to play";
 
   return (
     <section className="panel placeholder-page">
@@ -144,7 +153,7 @@ export function LobbyPage() {
               color: isLoading || isRefreshing ? "#b45309" : "#3730a3"
             }}
           >
-            {isLoading || isRefreshing ? "Refreshing players..." : "Ready to play"}
+            {statusHeadline}
           </p>
           <p style={{ marginTop: "8px" }}>{statusMessage}</p>
         </Card>

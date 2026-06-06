@@ -30,8 +30,8 @@ description: "Task list for Round End, Result & Restart (Scenario 4)"
 
 **Purpose**: Confirm Scenario 3 baseline and review Scenario 4 contract delta
 
-- [ ] T001 Verify Scenario 3 gameplay baseline (draw, guess, scoreboard, history) per `plans/004-round-end-restart/quickstart.md` prerequisites
-- [ ] T002 [P] Review `plans/004-round-end-restart/contracts/rooms-api.md` delta against current `backend/src/api/rooms.ts` and `backend/src/services/roomStore.ts`
+- [x] T001 Verify Scenario 3 gameplay baseline (draw, guess, scoreboard, history) per `plans/004-round-end-restart/quickstart.md` prerequisites
+- [x] T002 [P] Review `plans/004-round-end-restart/contracts/rooms-api.md` delta against current `backend/src/api/rooms.ts` and `backend/src/services/roomStore.ts`
 
 ---
 
@@ -41,12 +41,12 @@ description: "Task list for Round End, Result & Restart (Scenario 4)"
 
 **⚠️ CRITICAL**: No user story work should begin until this phase is complete
 
-- [ ] T003 Add `"result"` to `RoomStatus` in `backend/src/models/game.ts`
-- [ ] T004 Add `NOT_IN_RESULT` to `RoomStoreErrorCode` in `backend/src/services/roomStore.ts`
-- [ ] T005 [P] Add `endRoundSchema` and `restartGameSchema` in `backend/src/api/schemas.ts`
-- [ ] T006 [P] Implement `clearRoundState(room)` helper (clear `drawerId`, `secretWord`, `strokes`, `guesses`, `scores`) in `backend/src/services/roomStore.ts`
-- [ ] T007 [P] Extend `RoomSnapshot.status` union with `"result"` in `frontend/src/services/api.ts`
-- [ ] T008 Extend `resolveHostTransfer` to run when `status === "result"` (same join-order rules as lobby) in `backend/src/services/roomStore.ts`
+- [x] T003 Add `"result"` to `RoomStatus` in `backend/src/models/game.ts`
+- [x] T004 Add `NOT_IN_RESULT` to `RoomStoreErrorCode` in `backend/src/services/roomStore.ts`
+- [x] T005 [P] Add `endRoundSchema` and `restartGameSchema` in `backend/src/api/schemas.ts`
+- [x] T006 [P] Implement `clearRoundState(room)` helper (clear `drawerId`, `secretWord`, `strokes`, `guesses`, `scores`) in `backend/src/services/roomStore.ts`
+- [x] T007 [P] Extend `RoomSnapshot.status` union with `"result"` in `frontend/src/services/api.ts`
+- [x] T008 Extend `resolveHostTransfer` to run when `status === "result"` (same join-order rules as lobby) in `backend/src/services/roomStore.ts`
 
 **Checkpoint**: Types compile; `result` status recognized; helpers ready per `plans/004-round-end-restart/data-model.md`
 
@@ -58,14 +58,14 @@ description: "Task list for Round End, Result & Restart (Scenario 4)"
 
 **Independent Test**: Two browsers — host clicks **End Round**; both tabs stay on `/game`, see secret word (not `Guess word`), frozen scores/history/canvas; non-host has no **End Round** button
 
-- [ ] T009 [US1] Implement `endRound(code, participantId)` with host auth and `playing` → `result` transition in `backend/src/services/roomStore.ts`
-- [ ] T010 [US1] Extend `toRoomSnapshot` for `result`: `wordDisplay = secretWord` for all viewers; include frozen `drawerId`, `strokes`, `guesses`, `scores`; omit `viewerRole` and `canStartGame` in `backend/src/services/roomStore.ts`
-- [ ] T011 [US1] Add `POST /rooms/:code/end` route with Zod validation in `backend/src/api/rooms.ts`
-- [ ] T012 [US1] Map `NOT_HOST` to HTTP 403 and `NOT_PLAYING` to HTTP 409 for end route in `backend/src/api/rooms.ts`
-- [ ] T013 [P] [US1] Add `endRound` API method in `frontend/src/services/api.ts`
-- [ ] T014 [US1] Add `endRound` wrapper on frontend `RoomStore` in `frontend/src/state/roomStore.ts`
-- [ ] T015 [US1] Add host-only **End Round** button when `status === "playing"` and full result-mode `GamePage` when `status === "result"`: revealed word, read-only `DrawingCanvas` (view mode + final strokes), visible `Scoreboard`/`ResultPanel`, hidden draw/clear/guess controls in `frontend/src/pages/GamePage.tsx`
-- [ ] T016 [US1] Add Vitest cases for host end, snapshot reveals word plus `drawerId`/frozen round fields to all viewers, and non-host rejected in `backend/src/services/roomStore.test.ts`
+- [x] T009 [US1] Implement `endRound(code, participantId)` with host auth and `playing` → `result` transition in `backend/src/services/roomStore.ts`
+- [x] T010 [US1] Extend `toRoomSnapshot` for `result`: `wordDisplay = secretWord` for all viewers; include frozen `drawerId`, `strokes`, `guesses`, `scores`; omit `viewerRole` and `canStartGame` in `backend/src/services/roomStore.ts`
+- [x] T011 [US1] Add `POST /rooms/:code/end` route with Zod validation in `backend/src/api/rooms.ts`
+- [x] T012 [US1] Map `NOT_HOST` to HTTP 403 and `NOT_PLAYING` to HTTP 409 for end route in `backend/src/api/rooms.ts`
+- [x] T013 [P] [US1] Add `endRound` API method in `frontend/src/services/api.ts`
+- [x] T014 [US1] Add `endRound` wrapper on frontend `RoomStore` in `frontend/src/state/roomStore.ts`
+- [x] T015 [US1] Add host-only **End Round** button when `status === "playing"` and full result-mode `GamePage` when `status === "result"`: revealed word, read-only `DrawingCanvas` (view mode + final strokes), visible `Scoreboard`/`ResultPanel`, hidden draw/clear/guess controls in `frontend/src/pages/GamePage.tsx`
+- [x] T016 [US1] Add Vitest cases for host end, snapshot reveals word plus `drawerId`/frozen round fields to all viewers, and non-host rejected in `backend/src/services/roomStore.test.ts`
 
 **Checkpoint**: US1 acceptance scenarios 1–7 pass
 
@@ -77,9 +77,9 @@ description: "Task list for Round End, Result & Restart (Scenario 4)"
 
 **Independent Test**: End round; drawer and guesser cannot draw/clear/guess; API POSTs return 409; poll shows unchanged state
 
-- [ ] T017 [US2] Confirm result-mode controls remain non-interactive after poll updates (no draw/clear/guess re-enabled) in `frontend/src/pages/GamePage.tsx`
-- [ ] T018 [US2] Add defensive UI guard so `GuessForm` and drawer actions cannot be invoked when `status === "result"` even if props drift in `frontend/src/pages/GamePage.tsx`
-- [ ] T019 [US2] Add Vitest cases confirming `appendStroke`, `clearCanvas`, and `submitGuess` reject when `status === "result"` in `backend/src/services/roomStore.test.ts`
+- [x] T017 [US2] Confirm result-mode controls remain non-interactive after poll updates (no draw/clear/guess re-enabled) in `frontend/src/pages/GamePage.tsx`
+- [x] T018 [US2] Add defensive UI guard so `GuessForm` and drawer actions cannot be invoked when `status === "result"` even if props drift in `frontend/src/pages/GamePage.tsx`
+- [x] T019 [US2] Add Vitest cases confirming `appendStroke`, `clearCanvas`, and `submitGuess` reject when `status === "result"` in `backend/src/services/roomStore.test.ts`
 
 **Checkpoint**: US2 acceptance scenarios 1–3 pass
 
@@ -91,14 +91,14 @@ description: "Task list for Round End, Result & Restart (Scenario 4)"
 
 **Independent Test**: Two browsers — host clicks **Restart**; both on `/lobby` within ~2s; roster preserved; no word/strokes/history/scores; host can **Start Game** again
 
-- [ ] T020 [US3] Implement `restartGame(code, participantId)` with host auth, `clearRoundState`, and `result` → `lobby` in `backend/src/services/roomStore.ts`
-- [ ] T021 [US3] Ensure `toRoomSnapshot` omits round fields (`drawerId`, `wordDisplay`, `strokes`, `guesses`, `scores`) when `status === "lobby"` in `backend/src/services/roomStore.ts`
-- [ ] T022 [US3] Add `POST /rooms/:code/restart` route with Zod validation in `backend/src/api/rooms.ts`
-- [ ] T023 [US3] Map `NOT_HOST` to HTTP 403 and `NOT_IN_RESULT` to HTTP 409 for restart route in `backend/src/api/rooms.ts`
-- [ ] T024 [P] [US3] Add `restartGame` API method in `frontend/src/services/api.ts`
-- [ ] T025 [US3] Add `restartGame` wrapper on frontend `RoomStore` in `frontend/src/state/roomStore.ts`
-- [ ] T026 [US3] Add host-only **Restart** button when `status === "result"` and navigate host to `/lobby` on success in `frontend/src/pages/GamePage.tsx`
-- [ ] T027 [US3] Add Vitest cases for restart reset, preserved participants, and non-host rejected in `backend/src/services/roomStore.test.ts`
+- [x] T020 [US3] Implement `restartGame(code, participantId)` with host auth, `clearRoundState`, and `result` → `lobby` in `backend/src/services/roomStore.ts`
+- [x] T021 [US3] Ensure `toRoomSnapshot` omits round fields (`drawerId`, `wordDisplay`, `strokes`, `guesses`, `scores`) when `status === "lobby"` in `backend/src/services/roomStore.ts`
+- [x] T022 [US3] Add `POST /rooms/:code/restart` route with Zod validation in `backend/src/api/rooms.ts`
+- [x] T023 [US3] Map `NOT_HOST` to HTTP 403 and `NOT_IN_RESULT` to HTTP 409 for restart route in `backend/src/api/rooms.ts`
+- [x] T024 [P] [US3] Add `restartGame` API method in `frontend/src/services/api.ts`
+- [x] T025 [US3] Add `restartGame` wrapper on frontend `RoomStore` in `frontend/src/state/roomStore.ts`
+- [x] T026 [US3] Add host-only **Restart** button when `status === "result"` and navigate host to `/lobby` on success in `frontend/src/pages/GamePage.tsx`
+- [x] T027 [US3] Add Vitest cases for restart reset, preserved participants, and non-host rejected in `backend/src/services/roomStore.test.ts`
 
 **Checkpoint**: US3 acceptance scenarios 1–6 pass
 
@@ -110,10 +110,10 @@ description: "Task list for Round End, Result & Restart (Scenario 4)"
 
 **Independent Test**: Two browsers — result sync without manual refresh; restart auto-navigates game-page guests to lobby; Exit Game shows lobby hint without redirect to game; hint removed after restart
 
-- [ ] T028 [US4] Navigate to `/lobby` when polled `status === "lobby"` in `frontend/src/hooks/useGamePolling.ts`
-- [ ] T029 [US4] Redirect to `/game` only when `status === "playing"` (not `result`) in `frontend/src/hooks/useLobbyPolling.ts`
-- [ ] T030 [US4] Show `Round ended — waiting for host to restart` hint when `status === "result"`, hide **Start Game** when `canStartGame` is false, and remove hint after restart in `frontend/src/pages/LobbyPage.tsx`
-- [ ] T031 [US4] Verify mid-result `fetchRoom` refresh restores result view (quickstart Test 6) and post-restart refresh lands on lobby with cleared state (quickstart Test 7) in `frontend/src/pages/GamePage.tsx` and `frontend/src/pages/LobbyPage.tsx`
+- [x] T028 [US4] Navigate to `/lobby` when polled `status === "lobby"` in `frontend/src/hooks/useGamePolling.ts`
+- [x] T029 [US4] Redirect to `/game` only when `status === "playing"` (not `result`) in `frontend/src/hooks/useLobbyPolling.ts`
+- [x] T030 [US4] Show `Round ended — waiting for host to restart` hint when `status === "result"`, hide **Start Game** when `canStartGame` is false, and remove hint after restart in `frontend/src/pages/LobbyPage.tsx`
+- [x] T031 [US4] Verify mid-result `fetchRoom` refresh restores result view (quickstart Test 6) and post-restart refresh lands on lobby with cleared state (quickstart Test 7) in `frontend/src/pages/GamePage.tsx` and `frontend/src/pages/LobbyPage.tsx`
 
 **Checkpoint**: US4 acceptance scenarios 1–6 pass
 
@@ -123,9 +123,9 @@ description: "Task list for Round End, Result & Restart (Scenario 4)"
 
 **Purpose**: Full test pass, manual validation, and builds
 
-- [ ] T032 [P] Run and extend Vitest coverage for all Scenario 4 paths, including host transfer while `status === "result"` (stale host → new host can restart), in `backend/src/services/roomStore.test.ts`
-- [ ] T033 Run manual validation per `plans/004-round-end-restart/quickstart.md` (Tests 1–8)
-- [ ] T034 Run `npm run build` in `backend/` and `frontend/`
+- [x] T032 [P] Run and extend Vitest coverage for all Scenario 4 paths, including host transfer while `status === "result"` (stale host → new host can restart), in `backend/src/services/roomStore.test.ts`
+- [x] T033 Run manual validation per `plans/004-round-end-restart/quickstart.md` (Tests 1–8)
+- [x] T034 Run `npm run build` in `backend/` and `frontend/`
 
 ---
 

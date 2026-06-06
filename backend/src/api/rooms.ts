@@ -4,8 +4,10 @@ import {
   appendStrokeSchema,
   clearCanvasSchema,
   createRoomSchema,
+  endRoundSchema,
   HttpError,
   joinRoomSchema,
+  restartGameSchema,
   roomCodeParamsSchema,
   roomViewerQuerySchema,
   startGameSchema,
@@ -15,8 +17,10 @@ import {
   appendStroke,
   clearCanvas,
   createRoom,
+  endRound,
   getRoomSnapshot,
   joinRoom,
+  restartGame,
   RoomStoreError,
   startGame,
   submitGuess
@@ -35,6 +39,7 @@ function mapRoomStoreError(error: RoomStoreError) {
       return new HttpError(404, error.message);
     case "DUPLICATE_NAME":
     case "NOT_PLAYING":
+    case "NOT_IN_RESULT":
       return new HttpError(409, error.message);
     case "NOT_HOST":
     case "NOT_DRAWER":
@@ -141,6 +146,30 @@ export function createRoomsRouter() {
       const { code } = roomCodeParamsSchema.parse(request.params);
       const { participantId, text } = submitGuessSchema.parse(request.body);
       const room = submitGuess(code, participantId, text);
+
+      response.json({ room });
+    } catch (error) {
+      handleRoomRouteError(error, next);
+    }
+  });
+
+  router.post("/:code/end", (request, response, next) => {
+    try {
+      const { code } = roomCodeParamsSchema.parse(request.params);
+      const { participantId } = endRoundSchema.parse(request.body);
+      const room = endRound(code, participantId);
+
+      response.json({ room });
+    } catch (error) {
+      handleRoomRouteError(error, next);
+    }
+  });
+
+  router.post("/:code/restart", (request, response, next) => {
+    try {
+      const { code } = roomCodeParamsSchema.parse(request.params);
+      const { participantId } = restartGameSchema.parse(request.body);
+      const room = restartGame(code, participantId);
 
       response.json({ room });
     } catch (error) {

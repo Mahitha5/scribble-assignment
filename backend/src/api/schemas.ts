@@ -17,6 +17,14 @@ export const startGameSchema = z.object({
   participantId: z.string().uuid()
 });
 
+export const endRoundSchema = z.object({
+  participantId: z.string().uuid()
+});
+
+export const restartGameSchema = z.object({
+  participantId: z.string().uuid()
+});
+
 export const roomCodeParamsSchema = z.object({
   code: roomCodeSchema
 });

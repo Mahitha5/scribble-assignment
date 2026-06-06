@@ -26,7 +26,8 @@ export type RoomStoreErrorCode =
   | "DRAWER_CANNOT_GUESS"
   | "NOT_DRAWER"
   | "INVALID_STROKE"
-  | "NOT_PLAYING";
+  | "NOT_PLAYING"
+  | "NOT_IN_RESULT";
 
 export class RoomStoreError extends Error {
   readonly code: RoomStoreErrorCode;
@@ -219,6 +220,45 @@ function initializeGameplayState(room: Room) {
   room.scores = Object.fromEntries(room.participants.map((participant) => [participant.id, 0]));
 }
 
+function clearRoundState(room: Room) {
+  delete room.drawerId;
+  delete room.secretWord;
+  delete room.strokes;
+  delete room.guesses;
+  delete room.scores;
+}
+
+function assertHost(room: Room, participantId: string, message: string) {
+  const participant = room.participants.find((entry) => entry.id === participantId);
+
+  if (!participant) {
+    throw new RoomStoreError("ROOM_NOT_FOUND", "Unable to load room");
+  }
+
+  if (!participant.isHost) {
+    throw new RoomStoreError("NOT_HOST", message);
+  }
+}
+
+function mapGuesses(room: Room) {
+  return (room.guesses ?? []).map((entry) => ({
+    id: entry.id,
+    playerName: entry.playerName,
+    text: entry.text,
+    isCorrect: entry.isCorrect,
+    scoredPoints: entry.scoredPoints,
+    submittedAt: entry.submittedAt
+  }));
+}
+
+function mapScores(room: Room) {
+  return room.participants.map((participant) => ({
+    participantId: participant.id,
+    playerName: participant.name ?? "Unknown player",
+    score: room.scores?.[participant.id] ?? 0
+  }));
+}
+
 export function selectSecretWord(roomCode: string) {
   const upper = roomCode.toUpperCase();
   const sum = [...upper].reduce((total, character) => total + character.charCodeAt(0), 0);
@@ -228,7 +268,7 @@ export function selectSecretWord(roomCode: string) {
 }
 
 export function resolveHostTransfer(room: Room, referenceMs = nowMs()) {
-  if (room.status !== "lobby") {
+  if (room.status !== "lobby" && room.status !== "result") {
     return;
   }
 
@@ -409,14 +449,17 @@ export function toRoomSnapshot(room: Room, viewerParticipantId?: string): RoomSn
     : undefined;
   const isViewerHost = viewer?.isHost ?? false;
   const isPlaying = room.status === "playing";
+  const isResult = room.status === "result";
+  const hasRoundView = isPlaying || isResult;
   const viewerRole =
     isPlaying && room.drawerId && viewerParticipantId
       ? viewerParticipantId === room.drawerId
         ? "drawer"
         : "guesser"
       : undefined;
-  const wordDisplay =
-    isPlaying && room.secretWord
+  const wordDisplay = isResult
+    ? room.secretWord
+    : isPlaying && room.secretWord
       ? viewerRole === "drawer"
         ? room.secretWord
         : "Guess word"
@@ -436,27 +479,12 @@ export function toRoomSnapshot(room: Room, viewerParticipantId?: string): RoomSn
     viewerParticipantId,
     isViewerHost,
     canStartGame: isViewerHost && room.status === "lobby" && room.participants.length >= 2,
-    drawerId: isPlaying ? room.drawerId : undefined,
+    drawerId: hasRoundView ? room.drawerId : undefined,
     viewerRole,
     wordDisplay,
-    strokes: isPlaying ? [...(room.strokes ?? [])] : undefined,
-    guesses: isPlaying
-      ? (room.guesses ?? []).map((entry) => ({
-          id: entry.id,
-          playerName: entry.playerName,
-          text: entry.text,
-          isCorrect: entry.isCorrect,
-          scoredPoints: entry.scoredPoints,
-          submittedAt: entry.submittedAt
-        }))
-      : undefined,
-    scores: isPlaying
-      ? room.participants.map((participant) => ({
-          participantId: participant.id,
-          playerName: participant.name ?? "Unknown player",
-          score: room.scores?.[participant.id] ?? 0
-        }))
-      : undefined
+    strokes: hasRoundView ? [...(room.strokes ?? [])] : undefined,
+    guesses: hasRoundView ? mapGuesses(room) : undefined,
+    scores: hasRoundView ? mapScores(room) : undefined
   };
 }
 
@@ -515,6 +543,33 @@ export function startGame(code: string, participantId: string) {
   room.secretWord = selectSecretWord(room.code);
   initializeGameplayState(room);
   room.status = "playing";
+  persistRoom(room);
+
+  return toRoomSnapshot(room, participantId);
+}
+
+export function endRound(code: string, participantId: string) {
+  const room = loadPreparedRoom(code, "Unable to load room");
+  assertPlaying(room);
+  assertHost(room, participantId, "Only the host can end the round");
+
+  room.status = "result";
+  persistRoom(room);
+
+  return toRoomSnapshot(room, participantId);
+}
+
+export function restartGame(code: string, participantId: string) {
+  const room = loadPreparedRoom(code, "Unable to load room");
+
+  if (room.status !== "result") {
+    throw new RoomStoreError("NOT_IN_RESULT", "Round has not ended");
+  }
+
+  assertHost(room, participantId, "Only the host can restart the game");
+
+  clearRoundState(room);
+  room.status = "lobby";
   persistRoom(room);
 
   return toRoomSnapshot(room, participantId);

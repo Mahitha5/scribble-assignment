@@ -15,6 +15,9 @@ export function GamePage() {
   const { room, participantId, roomCode } = useRoomState();
   const { pollError, isRefreshing } = useGamePolling();
   const [initialLoadError, setInitialLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [isEndingRound, setIsEndingRound] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
 
   useEffect(() => {
     if (!participantId || !roomCode) {
@@ -32,7 +35,15 @@ export function GamePage() {
     async function loadInitialSnapshot() {
       try {
         setInitialLoadError(null);
-        await roomStore.fetchRoom();
+        const snapshot = await roomStore.fetchRoom();
+
+        if (!active || !snapshot) {
+          return;
+        }
+
+        if (snapshot.status === "lobby") {
+          navigate("/lobby", { replace: true });
+        }
       } catch (caughtError) {
         if (!active) {
           return;
@@ -66,28 +77,63 @@ export function GamePage() {
     );
   }
 
+  const isPlaying = room.status === "playing";
+  const isResult = room.status === "result";
+  const isRoundActive = isPlaying || isResult;
   const viewer = room.participants.find((participant) => participant.id === participantId) ?? null;
   const drawer = room.drawerId
     ? room.participants.find((participant) => participant.id === room.drawerId) ?? null
     : null;
-  const viewerRole = room.viewerRole ?? (room.drawerId === participantId ? "drawer" : "guesser");
-  const roleLabel = viewerRole === "drawer" ? "Drawer" : "Guesser";
+  const viewerRole =
+    room.viewerRole ??
+    (isPlaying && room.drawerId === participantId ? "drawer" : isPlaying ? "guesser" : undefined);
+  const roleLabel =
+    viewerRole === "drawer" ? "Drawer" : viewerRole === "guesser" ? "Guesser" : isResult ? "Spectator" : "Player";
   const strokes = room.strokes ?? [];
   const guesses = room.guesses ?? [];
   const scores = room.scores ?? [];
-  const isDrawer = viewerRole === "drawer";
+  const isDrawer = isPlaying && viewerRole === "drawer";
+  const canDraw = isDrawer;
+  const showGuessForm = isPlaying && !isDrawer;
+  const pageTitle = isResult ? "Round Results" : "Guess the Word!";
+
+  async function handleEndRound() {
+    try {
+      setActionError(null);
+      setIsEndingRound(true);
+      await roomStore.endRound();
+    } catch (caughtError) {
+      setActionError(caughtError instanceof Error ? caughtError.message : "Unable to end round");
+    } finally {
+      setIsEndingRound(false);
+    }
+  }
+
+  async function handleRestart() {
+    try {
+      setActionError(null);
+      setIsRestarting(true);
+      await roomStore.restartGame();
+      navigate("/lobby", { replace: true });
+    } catch (caughtError) {
+      setActionError(caughtError instanceof Error ? caughtError.message : "Unable to restart game");
+    } finally {
+      setIsRestarting(false);
+    }
+  }
 
   return (
     <section className="panel game-page">
       <div className="game-page__header">
         <div className="game-page__header-left">
           <span className="section-kicker">Round 1</span>
-          <h1 className="game-page__title">Guess the Word!</h1>
+          <h1 className="game-page__title">{pageTitle}</h1>
         </div>
         <RoomCodeBadge code={room.code} />
       </div>
 
       {pollError ? <p className="status-line">{pollError}</p> : null}
+      {actionError ? <p className="status-line">{actionError}</p> : null}
       {isRefreshing ? <p className="status-line">Refreshing game...</p> : null}
 
       <div className="game-page__layout">
@@ -98,39 +144,49 @@ export function GamePage() {
 
         <div className="game-page__main">
           <Card title="Word">
-            <p className="game-page__word">{room.wordDisplay ?? "Guess word"}</p>
+            <p className="game-page__word">{room.wordDisplay ?? (isResult ? "—" : "Guess word")}</p>
           </Card>
 
           <Card title="Canvas">
             <div className="canvas-panel">
               <DrawingCanvas
-                mode={isDrawer ? "draw" : "view"}
+                mode={canDraw ? "draw" : "view"}
                 strokes={strokes}
                 onStrokeComplete={
-                  isDrawer
+                  canDraw
                     ? async (stroke) => {
+                        if (room.status !== "playing") {
+                          return;
+                        }
+
                         await roomStore.appendStroke(stroke);
                       }
                     : undefined
                 }
               />
-              {isDrawer ? (
+              {canDraw ? (
                 <div className="button-row button-row--compact canvas-panel__actions">
                   <button
                     className="button button--secondary"
                     type="button"
                     onClick={() => {
+                      if (room.status !== "playing") {
+                        return;
+                      }
+
                       void roomStore.clearCanvas();
                     }}
                   >
                     Clear Canvas
                   </button>
                 </div>
-              ) : (
+              ) : isPlaying ? (
                 <p className="canvas-panel__hint">
                   {drawer ? `${drawer.name ?? "Someone"} is drawing...` : "Waiting for drawer..."}
                 </p>
-              )}
+              ) : isResult ? (
+                <p className="canvas-panel__hint">Final drawing</p>
+              ) : null}
             </div>
           </Card>
         </div>
@@ -146,21 +202,29 @@ export function GamePage() {
                 <dt>Role</dt>
                 <dd>{roleLabel}</dd>
               </div>
-              <div>
-                <dt>Drawer</dt>
-                <dd>{drawer?.name ?? "Unknown drawer"}</dd>
-              </div>
+              {isRoundActive ? (
+                <div>
+                  <dt>Drawer</dt>
+                  <dd>{drawer?.name ?? "Unknown drawer"}</dd>
+                </div>
+              ) : null}
             </dl>
           </Card>
 
-          <Card title="Your Guess">
-            <GuessForm
-              disabled={isDrawer}
-              onSubmit={async (text) => {
-                await roomStore.submitGuess(text);
-              }}
-            />
-          </Card>
+          {showGuessForm ? (
+            <Card title="Your Guess">
+              <GuessForm
+                disabled={!isPlaying || isDrawer}
+                onSubmit={async (text) => {
+                  if (room.status !== "playing") {
+                    return;
+                  }
+
+                  await roomStore.submitGuess(text);
+                }}
+              />
+            </Card>
+          ) : null}
         </aside>
       </div>
 
@@ -168,6 +232,30 @@ export function GamePage() {
         <button className="button button--secondary" onClick={() => navigate("/lobby")}>
           Exit Game
         </button>
+        {isPlaying && room.isViewerHost ? (
+          <button
+            className="button button--primary"
+            type="button"
+            disabled={isEndingRound}
+            onClick={() => {
+              void handleEndRound();
+            }}
+          >
+            {isEndingRound ? "Ending..." : "End Round"}
+          </button>
+        ) : null}
+        {isResult && room.isViewerHost ? (
+          <button
+            className="button button--primary"
+            type="button"
+            disabled={isRestarting}
+            onClick={() => {
+              void handleRestart();
+            }}
+          >
+            {isRestarting ? "Restarting..." : "Restart"}
+          </button>
+        ) : null}
       </div>
     </section>
   );
